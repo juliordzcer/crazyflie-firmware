@@ -1,2 +1,0 @@
-# firmware
-Crazyflie Firmware mod
