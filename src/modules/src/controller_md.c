@@ -14,17 +14,14 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 250;
-static float k2_phi = 180;
-static float k3_phi = 1;
+static float k1_phi = 180;
+static float k2_phi = 10;
 
-static float k1_theta = 250;
-static float k2_theta = 180;
-static float k3_theta = 1;
+static float k1_theta = 180;
+static float k2_theta = 10;
 
-static float k1_psi = 250;
-static float k2_psi = 180;
-static float k3_psi = 1;
+static float k1_psi = 160;
+static float k2_psi = 5;
 
 static float iephi = 0;
 static float ietheta = 0;
@@ -205,9 +202,12 @@ void controllermd(control_t *control, setpoint_t *setpoint,
     float ethetap = thetap - thetadp;
     float epsip   = psip - psidp; 
 
-    float tau_phi_n   = -k1_phi   * ephi   - k2_phi   *ephip   - k3_phi   * sign(ephi);
-    float tau_theta_n = -k1_theta * etheta - k2_theta *ethetap - k3_theta * sign(etheta);
-    float tau_psi_n   = -k1_psi   * epsi   - k2_psi   *epsip   - k3_psi   * sign(epsi);
+    float S_phi       =  ephip + k1_phi * ephi;
+    float tau_phi_n   = -k1_phi * ephip - k2_phi * sign(S_phi);
+    float S_theta     =  ethetap + k1_theta * etheta;
+    float tau_theta_n = -k1_theta * ethetap - k2_theta * sign(S_theta);
+    float S_psi       =  epsip + k1_psi * epsi;
+    float tau_psi_n   = -k1_psi * epsip - k2_psi * sign(S_psi);
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
@@ -248,15 +248,12 @@ void controllermd(control_t *control, setpoint_t *setpoint,
 PARAM_GROUP_START(ctrlSlidingModes)
 PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
 PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
-PARAM_ADD(PARAM_FLOAT, k3_phi, &k3_phi)
 
 PARAM_ADD(PARAM_FLOAT, k1_theta, &k1_theta)
 PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
-PARAM_ADD(PARAM_FLOAT, k3_theta, &k3_theta)
 
 PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
 PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
-PARAM_ADD(PARAM_FLOAT, k3_psi, &k3_psi)
 
 PARAM_GROUP_STOP(ctrlSlidingModes)
 
