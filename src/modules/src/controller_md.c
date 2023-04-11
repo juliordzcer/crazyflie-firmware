@@ -15,12 +15,12 @@
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
 static float k1_phi = 180;
-static float k2_phi = 10;
+static float k2_phi = 5;
 
 static float k1_theta = 180;
-static float k2_theta = 10;
+static float k2_theta = 5;
 
-static float k1_psi = 160;
+static float k1_psi = 150;
 static float k2_psi = 5;
 
 static float iephi = 0;
@@ -177,12 +177,28 @@ void controllermd(control_t *control, setpoint_t *setpoint,
     float ethetap = thetap - thetadp;
     float epsip   = psip - psidp; 
 
+    // Controlador Phi
     float S_phi       =  ephip + k1_phi * ephi;
-    float tau_phi_n   = -k1_phi * ephip - k2_phi * sign(S_phi);
+    // Usando el signo
+    // float tau_phi_n   = -k1_phi * ephip - k2_phi * sign(S_phi);
+    // Usando la saturacion. 
+    float tau_phi_n   = -k1_phi * ephip - k2_phi * clamp(S_phi/phi,-1,1);
+
+
+    // Controlador Theta
     float S_theta     =  ethetap + k1_theta * etheta;
-    float tau_theta_n = -k1_theta * ethetap - k2_theta * sign(S_theta);
+    // Usando el signo
+    // float tau_theta_n = -k1_theta * ethetap - k2_theta * sign(S_theta);
+    // Usando la saturacion
+    float tau_theta_n = -k1_theta * ethetap - k2_theta * clamp(S_theta/theta,-1,1);
+
+    // Controlador Psi
     float S_psi       =  epsip + k1_psi * epsi;
-    float tau_psi_n   = -k1_psi * epsip - k2_psi * sign(S_psi);
+    // Usando el signo
+    // float tau_psi_n   = -k1_psi * epsip - k2_psi * sign(S_psi);
+    // Usando la saturacion
+    float tau_psi_n   = -k1_psi * epsip - k2_psi * clamp(S_psi/psi,-1,1);
+
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
