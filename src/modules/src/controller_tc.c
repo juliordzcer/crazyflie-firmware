@@ -1,15 +1,31 @@
-
 #include "stabilizer_types.h"
 
-#include "attitude_tc_controller.h"
+#include "attitude_controller.h"
 #include "position_controller.h"
-#include "controller_tc.h"
+#include "position_controller.h"
+#include "controller_md.h"
 
+
+#include "commander.h"
+#include "platform_defaults.h"
 #include "log.h"
 #include "param.h"
 #include "math3d.h"
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
+
+static float k1_phi = 180;
+static float k2_phi = 10;
+
+static float k1_theta = 180;
+static float k2_theta = 10;
+
+static float k1_psi = 160;
+static float k2_psi = 5;
+
+static float iephi = 0;
+static float ietheta = 0;
+static float iepsi = 0;
 
 static attitude_t attitudeDesired;
 static attitude_t rateDesired;
@@ -19,23 +35,26 @@ static float cmd_thrust;
 static float cmd_roll;
 static float cmd_pitch;
 static float cmd_yaw;
-static float r_roll;
-static float r_pitch;
-static float r_yaw;
-static float accelz;
+
+
+void controllertcReset(void)
+{
+  iephi = 0;
+  ietheta = 0;
+  iepsi = 0;
+}
 
 void controllertcInit(void)
 {
-  attitudeControllerInitTC(ATTITUDE_UPDATE_DT);
+  attitudeControllerInit(ATTITUDE_UPDATE_DT);
   positionControllerInit();
+  controllertcReset();
 }
 
 bool controllertcTest(void)
 {
   bool pass = true;
-
-  pass &= attitudeControllerTestTC();
-
+  pass &= attitudeControllerTest();
   return pass;
 }
 
@@ -63,7 +82,7 @@ void controllertc(control_t *control, setpoint_t *setpoint,
     if (setpoint->mode.yaw == modeVelocity) {
       attitudeDesired.yaw = capAngle(attitudeDesired.yaw + setpoint->attitudeRate.yaw * ATTITUDE_UPDATE_DT);
        
-      float yawMaxDelta = attitudeControllerGetYawMaxDeltaTC();
+      float yawMaxDelta = attitudeControllerGetYawMaxDelta();
       if (yawMaxDelta != 0.0f)
       {
       float delta = capAngle(attitudeDesired.yaw-state->attitude.yaw);
@@ -88,6 +107,7 @@ void controllertc(control_t *control, setpoint_t *setpoint,
     attitudeDesired.yaw = capAngle(attitudeDesired.yaw);
   }
 
+  // Control de posicion
   if (RATE_DO_EXECUTE(POSITION_RATE, tick)) {
     positionController(&actuatorThrust, &attitudeDesired, setpoint, state);
   }
@@ -102,40 +122,79 @@ void controllertc(control_t *control, setpoint_t *setpoint,
       attitudeDesired.pitch = setpoint->attitude.pitch;
     }
 
-    attitudeControllerCorrectAttitudeTC(state->attitude.roll, state->attitude.pitch, state->attitude.yaw,
+    // Se obtiene la velocidad deseada en grados
+
+    attitudeControllerCorrectAttitudePID(state->attitude.roll, state->attitude.pitch, state->attitude.yaw,
                                 attitudeDesired.roll, attitudeDesired.pitch, attitudeDesired.yaw,
                                 &rateDesired.roll, &rateDesired.pitch, &rateDesired.yaw);
 
-    // For roll and pitch, if velocity mode, overwrite rateDesired with the setpoint
-    // value. Also reset the PID to avoid error buildup, which can lead to unstable
-    // behavior if level mode is engaged later
     if (setpoint->mode.roll == modeVelocity) {
       rateDesired.roll = setpoint->attitudeRate.roll;
-      attitudeControllerResetRollAttitudeTC();
+      attitudeControllerResetRollAttitudePID();
     }
     if (setpoint->mode.pitch == modeVelocity) {
       rateDesired.pitch = setpoint->attitudeRate.pitch;
-      attitudeControllerResetPitchAttitudeTC();
+      attitudeControllerResetPitchAttitudePID();
     }
 
-    // TODO: Investigate possibility to subtract gyro drift.
-    attitudeControllerCorrectRateTC(sensors->gyro.x, -sensors->gyro.y, sensors->gyro.z,
-                             rateDesired.roll, rateDesired.pitch, rateDesired.yaw);
+    float dt = ATTITUDE_UPDATE_DT;
 
-    attitudeControllerGetActuatorOutputTC(&control->roll,
-                                        &control->pitch,
-                                        &control->yaw);
+    // Conversion de a radianes 
 
+    float phid   = radians(attitudeDesired.roll);
+    float thetad = radians(attitudeDesired.pitch);
+    float psid   = radians(attitudeDesired.yaw);
+
+    float phidp   = radians(rateDesired.roll);
+    float thetadp = radians(rateDesired.pitch);
+    float psidp   = radians(rateDesired.yaw);
+
+    float phi   = radians(state->attitude.roll);
+    float theta = radians(state->attitude.pitch);
+    float psi   = radians(state->attitude.yaw);
+
+    float phip   = radians(sensors->gyro.x);
+    float thetap = radians(-sensors->gyro.y);
+    float psip   = radians(sensors->gyro.z);
+
+    // Errores de orientacion [Rad].
+
+    // Error de orientacion.
+    float ephi   = phi - phid;
+    float etheta = theta - thetad;
+    float epsi   = psi - psid;    
+    
+    // Integral del error de orientacion.
+    iephi   = iephi + ephi * dt;
+    iephi = clamp(iephi, -1,1);
+    ietheta = ietheta + etheta * dt;
+    ietheta = clamp(ietheta, -1,1);
+    iepsi   = iepsi + epsi * dt;
+    iepsi = clamp(iepsi, -1500,1500);
+
+    // Error de velocidad angular
+    float ephip   = phip - phidp;
+    float ethetap = thetap - thetadp;
+    float epsip   = psip - psidp; 
+
+    float S_phi       =  ephip + k1_phi * ephi;
+    float tau_phi_n   = -k1_phi * ephip - k2_phi * sign(S_phi);
+    float S_theta     =  ethetap + k1_theta * etheta;
+    float tau_theta_n = -k1_theta * ethetap - k2_theta * sign(S_theta);
+    float S_psi       =  epsip + k1_psi * epsi;
+    float tau_psi_n   = -k1_psi * epsip - k2_psi * sign(S_psi);
+
+    control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
+    control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
+    control->yaw = clamp(calculate_rpm(tau_psi_n), -32000, 32000);
+    
     control->yaw = -control->yaw;
 
     cmd_thrust = control->thrust;
     cmd_roll = control->roll;
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
-    r_roll = radians(sensors->gyro.x);
-    r_pitch = -radians(sensors->gyro.y);
-    r_yaw = radians(sensors->gyro.z);
-    accelz = sensors->acc.z;
+
   }
 
   control->thrust = actuatorThrust;
@@ -152,24 +211,33 @@ void controllertc(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    attitudeControllerResetAllTC();
+    attitudeControllerResetAllPID();
     positionControllerResetAllPID();
+    controllertcReset();
 
     // Reset the calculated YAW angle for rate control
     attitudeDesired.yaw = state->attitude.yaw;
   }
 }
 
+PARAM_GROUP_START(ctrlSlidingModes)
+PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
+PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
 
+PARAM_ADD(PARAM_FLOAT, k1_theta, &k1_theta)
+PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
 
+PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
+PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
 
+PARAM_GROUP_STOP(ctrlSlidingModes)
 
-
-
-
-
-
-
+LOG_GROUP_START(SlidingModes)
+LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
+LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
+LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
+LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
+LOG_GROUP_STOP(SlidingModes)
 
 
 

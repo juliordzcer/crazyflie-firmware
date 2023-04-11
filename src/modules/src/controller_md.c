@@ -27,31 +27,6 @@ static float iephi = 0;
 static float ietheta = 0;
 static float iepsi = 0;
 
-float sign(float n){
-    if(n > 0)
-        return 1.0;
-    else if(n < 0)
-        return -1.0;
-    else
-        return 0.0;
-}
-
-
-float calculate_rpm(float u) {
-  // Comprobar la validez de la entrada
-  if (isnan(u)) {
-    return 0.0f;
-  }
-  
-  // Calcular la fuerza de empuje en gramos
-  float thrust_gram = (float)fabs(u) * (float)(1.0f / 9.81f);
-
-  // Calcular las RPM
-  float rpm = sign(u) * (sqrtf(4.0f * 0.109e-6f * (thrust_gram - 0.154f) + powf(-210.6e-6f, 2)) - -210.6e-6f) / (2.0f * 0.109e-6f);
-
-  return rpm;
-}
-
 static attitude_t attitudeDesired;
 static attitude_t rateDesired;
 static float actuatorThrust;
