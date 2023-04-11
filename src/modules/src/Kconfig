@@ -36,6 +36,16 @@ config CONTROLLER_MELLINGER
     help
         Use the Mellinger controller as default
 
+config CONTROLLER_TC
+    bool "TC controller"
+    help
+        Use the TC controller as default
+
+config CONTROLLER_MD
+    bool "MD controller"
+    help
+        Use the MD controller as default
+
 endchoice
 
 config ESTIMATOR_KALMAN_ENABLE

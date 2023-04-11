@@ -4,6 +4,8 @@
 #include "cfassert.h"
 #include "controller.h"
 #include "controller_pid.h"
+#include "controller_tc.h"
+#include "controller_md.h"
 #include "controller_mellinger.h"
 #include "controller_indi.h"
 
@@ -26,6 +28,8 @@ static ControllerFcns controllerFunctions[] = {
   {.init = controllerPidInit, .test = controllerPidTest, .update = controllerPid, .name = "PID"},
   {.init = controllerMellingerInit, .test = controllerMellingerTest, .update = controllerMellinger, .name = "Mellinger"},
   {.init = controllerINDIInit, .test = controllerINDITest, .update = controllerINDI, .name = "INDI"},
+  {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "TC"},
+  {.init = controllermdInit, .test = controllermdTest, .update = controllermd, .name = "MD"},
 };
 
 
@@ -46,6 +50,10 @@ void controllerInit(ControllerType controller) {
     #define CONTROLLER ControllerTypeINDI
   #elif defined(CONFIG_CONTROLLER_MELLINGER)
     #define CONTROLLER ControllerTypeMellinger
+  #elif defined(CONFIG_CONTROLLER_TC)
+    #define CONTROLLER ControllerTypeMD
+  #elif defined(CONFIG_CONTROLLER_MD)
+    #define CONTROLLER ControllerTypeTC
   #else
     #define CONTROLLER ControllerTypeAny
   #endif
