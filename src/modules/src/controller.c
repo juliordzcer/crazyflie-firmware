@@ -5,14 +5,14 @@
 #include "controller.h"
 #include "controller_pid.h"
 #include "controller_tc.h"
-#include "controller_md.h"
-#include "controller_bs.h"
+#include "controller_smc.h"
+#include "controller_bc.h"
 #include "controller_mellinger.h"
 #include "controller_indi.h"
 
 #include "autoconf.h"
 
-#define DEFAULT_CONTROLLER ControllerTypeBS
+#define DEFAULT_CONTROLLER ControllerTypeBC
 static ControllerType currentController = ControllerTypeAny;
 
 static void initController();
@@ -30,8 +30,8 @@ static ControllerFcns controllerFunctions[] = {
   {.init = controllerMellingerInit, .test = controllerMellingerTest, .update = controllerMellinger, .name = "Mellinger"},
   {.init = controllerINDIInit, .test = controllerINDITest, .update = controllerINDI, .name = "INDI"},
   {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "Twisting"},
-  {.init = controllermdInit, .test = controllermdTest, .update = controllermd, .name = "Sliding Mode"},
-  {.init = controllerbsInit, .test = controllerbsTest, .update = controllerbs, .name = "Backstepping"},
+  {.init = controllersmcInit, .test = controllersmcTest, .update = controllersmc, .name = "Sliding Mode"},
+  {.init = controllerbcInit, .test = controllerbcTest, .update = controllerbc, .name = "Backstepping"},
 };
 
 
@@ -54,10 +54,10 @@ void controllerInit(ControllerType controller) {
     #define CONTROLLER ControllerTypeMellinger
   #elif defined(CONFIG_CONTROLLER_TC)
     #define CONTROLLER ControllerTypeTC
-  #elif defined(CONFIG_CONTROLLER_MD)
-    #define CONTROLLER ControllerTypeMD
-  #elif defined(CONFIG_CONTROLLER_BS)
-    #define CONTROLLER ControllerTypeBS    
+  #elif defined(CONFIG_CONTROLLER_SMC)
+    #define CONTROLLER ControllerTypeSMC
+  #elif defined(CONFIG_CONTROLLER_BC)
+    #define CONTROLLER ControllerTypeBC    
   #else
     #define CONTROLLER ControllerTypeAny
   #endif

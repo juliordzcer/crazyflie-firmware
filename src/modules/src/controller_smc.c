@@ -2,7 +2,7 @@
 
 #include "attitude_controller.h"
 #include "position_controller.h"
-#include "controller_md.h"
+#include "controller_smc.h"
 
 
 #include "commander.h"
@@ -36,21 +36,21 @@ static float cmd_pitch;
 static float cmd_yaw;
 
 
-void controllermdReset(void)
+void controllersmcReset(void)
 {
   iephi = 0;
   ietheta = 0;
   iepsi = 0;
 }
 
-void controllermdInit(void)
+void controllersmcInit(void)
 {
   attitudeControllerInit(ATTITUDE_UPDATE_DT);
   positionControllerInit();
-  controllermdReset();
+  controllersmcReset();
 }
 
-bool controllermdTest(void)
+bool controllersmcTest(void)
 {
   bool pass = true;
   pass &= attitudeControllerTest();
@@ -71,7 +71,7 @@ static float capAngle(float angle) {
   return result;
 }
 
-void controllermd(control_t *control, setpoint_t *setpoint,
+void controllersmc(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
@@ -228,14 +228,14 @@ void controllermd(control_t *control, setpoint_t *setpoint,
 
     attitudeControllerResetAllPID();
     positionControllerResetAllPID();
-    controllermdReset();
+    controllersmcReset();
 
     // Reset the calculated YAW angle for rate control
     attitudeDesired.yaw = state->attitude.yaw;
   }
 }
 
-PARAM_GROUP_START(ctrlSlidingModes)
+PARAM_GROUP_START(SlidingMode)
 PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
 PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
 
@@ -245,7 +245,7 @@ PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
 PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
 PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
 
-PARAM_GROUP_STOP(ctrlSlidingModes)
+PARAM_GROUP_STOP(SlidingModes)
 
 LOG_GROUP_START(SlidingModes)
 LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)

@@ -2,7 +2,7 @@
 
 #include "attitude_controller.h"
 #include "position_controller.h"
-#include "controller_bs.h"
+#include "controller_bc.h"
 
 
 #include "commander.h"
@@ -36,21 +36,21 @@ static float cmd_pitch;
 static float cmd_yaw;
 
 
-void controllerbsReset(void)
+void controllerbcReset(void)
 {
   iephi = 0;
   ietheta = 0;
   iepsi = 0;
 }
 
-void controllerbsInit(void)
+void controllerbcInit(void)
 {
   attitudeControllerInit(ATTITUDE_UPDATE_DT);
   positionControllerInit();
-  controllerbsReset();
+  controllerbcReset();
 }
 
-bool controllerbsTest(void)
+bool controllerbcTest(void)
 {
   bool pass = true;
   pass &= attitudeControllerTest();
@@ -71,7 +71,7 @@ static float capAngle(float angle) {
   return result;
 }
 
-void controllerbs(control_t *control, setpoint_t *setpoint,
+void controllerbc(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
@@ -159,9 +159,9 @@ void controllerbs(control_t *control, setpoint_t *setpoint,
     // Errores de orientacion [Rad].
 
     // Error de orientacion.
-    float ephi   = phi - phid;
-    float etheta = theta - thetad;
-    float epsi   = psi - psid;    
+    float ephi   = phid - phi;
+    float etheta = thetad - theta;
+    float epsi   = psid - psi;    
     
     // Integral del error de orientacion.
     iephi   = iephi + ephi * dt;
@@ -172,25 +172,25 @@ void controllerbs(control_t *control, setpoint_t *setpoint,
     iepsi = clamp(iepsi, -1500,1500);
 
     // Error de velocidad angular
-    float ephip   = phip - phidp;
-    float ethetap = thetap - thetadp;
-    float epsip   = psip - psidp; 
+    float ephip   = phidp - phip;
+    float ethetap = thetadp - thetap;
+    float epsip   = psidp - psip; 
 
     // Controlador Phi
-    float nu_phi    = - k1_phi * ephi - phidp;
-    float ephi2     =   phip - nu_phi;
-    float tau_phi_n = - k1_phi * ephip - k2_phi * ephi2; 
+    float nu_phi    = phidp + k1_phi * ephi;
+    float ephi2     = nu_phi - phip;
+    float tau_phi_n = ephi + k1_phi * ephip + k2_phi * ephi2; 
 
 
     // Controlador Theta
-    float nu_theta    = - k1_theta * etheta - thetadp;
-    float etheta2     =   thetap - nu_theta;
-    float tau_theta_n = - k1_theta * ethetap - k2_theta * etheta2;
+    float nu_theta    = k1_theta * etheta + thetadp;
+    float etheta2     = nu_theta - thetap;
+    float tau_theta_n = etheta + k1_theta * ethetap + k2_theta * etheta2;
 
     // Controlador Psi
-    float nu_psi     = - k1_psi * epsi - psidp;
-    float epsi2      =   psip - nu_psi;
-    float tau_psi_n  = - k1_psi * epsip - k2_psi * epsi2; 
+    float nu_psi     = k1_psi * epsi + psidp;
+    float epsi2      = nu_psi - psip;
+    float tau_psi_n  = epsi + k1_psi * epsip + k2_psi * epsi2; 
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
@@ -221,7 +221,7 @@ void controllerbs(control_t *control, setpoint_t *setpoint,
 
     attitudeControllerResetAllPID();
     positionControllerResetAllPID();
-    controllerbsReset();
+    controllerbcReset();
 
     // Reset the calculated YAW angle for rate control
     attitudeDesired.yaw = state->attitude.yaw;

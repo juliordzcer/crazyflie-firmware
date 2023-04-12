@@ -41,12 +41,12 @@ config CONTROLLER_TC
     help
         Use the Twisting controller as default
 
-config CONTROLLER_MD
+config CONTROLLER_SMC
     bool "Sliding Mode controller"
     help
         Use the Sliding Mode controller as default
 
-config CONTROLLER_BS
+config CONTROLLER_BC
     bool "Backstepping controller"
     help
         Use the Backstepping controller as default
