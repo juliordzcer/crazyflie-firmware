@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "stabilizer_types.h"
 
 #include "attitude_controller.h"
@@ -14,18 +16,23 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 180;
-static float k2_phi = 10;
+// Ganancias STSMC
+static float zeta_phi = 5.5f;
+static float k0_phi = 2.6f;
 
-static float k1_theta = 180;
-static float k2_theta = 10;
+static float zeta_theta = 5.5f;
+static float k0_theta = 2.6f;
 
-static float k1_psi = 160;
-static float k2_psi = 5;
+static float zeta_psi = 8.5f;
+static float k0_psi = 2.1f;
 
 static float iephi = 0;
 static float ietheta = 0;
 static float iepsi = 0;
+
+static float phi3 = 0;
+static float theta3 = 0;
+static float psi3 = 0;
 
 static attitude_t attitudeDesired;
 static attitude_t rateDesired;
@@ -37,11 +44,16 @@ static float cmd_pitch;
 static float cmd_yaw;
 
 
+
 void controllertcReset(void)
 {
   iephi = 0;
   ietheta = 0;
   iepsi = 0;
+
+  phi3 = 0;
+  theta3 = 0;
+  psi3 = 0;
 }
 
 void controllertcInit(void)
@@ -139,6 +151,16 @@ void controllertc(control_t *control, setpoint_t *setpoint,
 
     float dt = ATTITUDE_UPDATE_DT;
 
+    // Ganancias del controlador
+    float k1_phi = 1.5f * sqrtf(zeta_phi);
+    float k2_phi = 1.1f * zeta_phi;
+
+    float k1_theta = 1.5f * sqrtf(zeta_theta);
+    float k2_theta = 1.1f * zeta_theta;
+
+    float k1_psi = 1.5f * sqrtf(zeta_psi);
+    float k2_psi = 1.1f * zeta_psi;
+
     // Conversion de a radianes 
 
     float phid   = radians(attitudeDesired.roll);
@@ -177,12 +199,21 @@ void controllertc(control_t *control, setpoint_t *setpoint,
     float ethetap = thetap - thetadp;
     float epsip   = psip - psidp; 
 
-    float S_phi       =  ephip + k1_phi * ephi;
-    float tau_phi_n   = -k1_phi * ephip - k2_phi * sign(S_phi);
-    float S_theta     =  ethetap + k1_theta * etheta;
-    float tau_theta_n = -k1_theta * ethetap - k2_theta * sign(S_theta);
-    float S_psi       =  epsip + k1_psi * epsi;
-    float tau_psi_n   = -k1_psi * epsip - k2_psi * sign(S_psi);
+    // Control de Phi 
+    float phi_mphi = ephip + k0_phi * powf(fabsf(ephi), 2.0f / 3.0f) * sign(ephi);
+    phi3 = phi3 + (-k2_phi * sign(phi_mphi)) * dt;
+    float tau_phi_n = -k1_phi * powf(fabsf(phi_mphi), 0.5f) * sign(phi_mphi) + phi3;
+
+    // Control de Theta
+    float phi_mtheta = ethetap + k0_theta * powf(fabsf(etheta), 2.0f / 3.0f) * sign(etheta);
+    theta3 = theta3 + (-k2_theta * sign(phi_mtheta)) * dt;
+    float tau_theta_n = -k1_theta * powf(fabsf(phi_mtheta), 0.5f) * sign(phi_mtheta) + theta3;
+
+    // Control de Psi
+    float phi_mpsi = epsip + k0_psi * powf(fabsf(epsi), 2.0f / 3.0f) * sign(epsi);
+    psi3 = psi3 + (-k2_psi * sign(phi_mpsi)) * dt;
+    float tau_psi_n = -k1_psi * powf(fabsf(phi_mpsi), 0.5f) * sign(phi_mpsi) + psi3;
+
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
@@ -221,14 +252,14 @@ void controllertc(control_t *control, setpoint_t *setpoint,
 }
 
 PARAM_GROUP_START(Twisting)
-PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
-PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
+PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
+PARAM_ADD(PARAM_FLOAT, k0_phi, &k0_phi)
 
-PARAM_ADD(PARAM_FLOAT, k1_theta, &k1_theta)
-PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
+PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
+PARAM_ADD(PARAM_FLOAT, k0_theta, &k0_theta)
 
-PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
-PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
+PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
+PARAM_ADD(PARAM_FLOAT, k0_psi, &k0_psi)
 
 PARAM_GROUP_STOP(Twisting)
 
