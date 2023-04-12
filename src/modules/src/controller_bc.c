@@ -13,14 +13,14 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 30;
-static float k2_phi = 25;
+static float k1_phi = 100;
+static float k2_phi = 2;
 
-static float k1_theta = 30;
-static float k2_theta = 25;
+static float k1_theta = 100;
+static float k2_theta = 2;
 
-static float k1_psi = 30;
-static float k2_psi = 30;
+static float k1_psi = 95;
+static float k2_psi = 2.3;
 
 static float iephi   = 0;
 static float ietheta = 0;
@@ -176,21 +176,20 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     float ethetap = thetadp - thetap;
     float epsip   = psidp - psip; 
 
-    // Controlador Phi
-    float nu_phi    = phidp + k1_phi * ephi;
-    float ephi2     = nu_phi - phip;
-    float tau_phi_n = ephi + k1_phi * ephip + k2_phi * ephi2; 
+    // Control de Phi
+    float nu_phi = phidp + k1_phi * ephi;
+    float ephi2 = nu_phi - phip;
+    float tau_phi_n = ephi + k1_phi * ephip + k2_phi * ephi2;
 
-
-    // Controlador Theta
-    float nu_theta    = k1_theta * etheta + thetadp;
-    float etheta2     = nu_theta - thetap;
+    // Control de Theta
+    float nu_theta = k1_theta * etheta + thetadp;
+    float etheta2 = nu_theta - thetap;
     float tau_theta_n = etheta + k1_theta * ethetap + k2_theta * etheta2;
 
-    // Controlador Psi
-    float nu_psi     = k1_psi * epsi + psidp;
-    float epsi2      = nu_psi - psip;
-    float tau_psi_n  = epsi + k1_psi * epsip + k2_psi * epsi2; 
+    // Control de Psi
+    float nu_psi = k1_psi * epsi + psidp;
+    float epsi2 = nu_psi - psip;
+    float tau_psi_n = epsi + k1_psi * epsip + k2_psi * epsi2;
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);

@@ -14,13 +14,13 @@
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
 static float k1_phi = 180;
-static float k2_phi = 5;
+static float k2_phi = 8;
 
 static float k1_theta = 180;
-static float k2_theta = 5;
+static float k2_theta = 8;
 
 static float k1_psi = 150;
-static float k2_psi = 5;
+static float k2_psi = 8;
 
 static float iephi = 0;
 static float ietheta = 0;
