@@ -6,12 +6,13 @@
 #include "controller_pid.h"
 #include "controller_tc.h"
 #include "controller_md.h"
+#include "controller_bs.h"
 #include "controller_mellinger.h"
 #include "controller_indi.h"
 
 #include "autoconf.h"
 
-#define DEFAULT_CONTROLLER ControllerTypeMD
+#define DEFAULT_CONTROLLER ControllerTypeBS
 static ControllerType currentController = ControllerTypeAny;
 
 static void initController();
@@ -30,6 +31,7 @@ static ControllerFcns controllerFunctions[] = {
   {.init = controllerINDIInit, .test = controllerINDITest, .update = controllerINDI, .name = "INDI"},
   {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "TC"},
   {.init = controllermdInit, .test = controllermdTest, .update = controllermd, .name = "MD"},
+  {.init = controllerbsInit, .test = controllerbsTest, .update = controllerbs, .name = "BS"},
 };
 
 
@@ -54,6 +56,8 @@ void controllerInit(ControllerType controller) {
     #define CONTROLLER ControllerTypeTC
   #elif defined(CONFIG_CONTROLLER_MD)
     #define CONTROLLER ControllerTypeMD
+  #elif defined(CONFIG_CONTROLLER_BS)
+    #define CONTROLLER ControllerTypeBS    
   #else
     #define CONTROLLER ControllerTypeAny
   #endif

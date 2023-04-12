@@ -31,6 +31,7 @@
 %include "controller_pid.h"
 %include "controller_tc.h"
 %include "controller_md.h"
+%include "controller_bs.h"
 %include "imu_types.h"
 %include "controller_mellinger.h"
 %include "power_distribution.h"

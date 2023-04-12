@@ -2,7 +2,7 @@
 
 #include "attitude_controller.h"
 #include "position_controller.h"
-#include "controller_md.h"
+#include "controller_bs.h"
 
 
 #include "commander.h"
@@ -13,18 +13,18 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 180;
-static float k2_phi = 5;
+static float k1_phi = 30;
+static float k2_phi = 25;
 
-static float k1_theta = 180;
-static float k2_theta = 5;
+static float k1_theta = 30;
+static float k2_theta = 25;
 
-static float k1_psi = 150;
-static float k2_psi = 5;
+static float k1_psi = 30;
+static float k2_psi = 30;
 
-static float iephi = 0;
+static float iephi   = 0;
 static float ietheta = 0;
-static float iepsi = 0;
+static float iepsi   = 0;
 
 static attitude_t attitudeDesired;
 static attitude_t rateDesired;
@@ -36,21 +36,21 @@ static float cmd_pitch;
 static float cmd_yaw;
 
 
-void controllermdReset(void)
+void controllerbsReset(void)
 {
   iephi = 0;
   ietheta = 0;
   iepsi = 0;
 }
 
-void controllermdInit(void)
+void controllerbsInit(void)
 {
   attitudeControllerInit(ATTITUDE_UPDATE_DT);
   positionControllerInit();
-  controllermdReset();
+  controllerbsReset();
 }
 
-bool controllermdTest(void)
+bool controllerbsTest(void)
 {
   bool pass = true;
   pass &= attitudeControllerTest();
@@ -71,7 +71,7 @@ static float capAngle(float angle) {
   return result;
 }
 
-void controllermd(control_t *control, setpoint_t *setpoint,
+void controllerbs(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
@@ -177,27 +177,20 @@ void controllermd(control_t *control, setpoint_t *setpoint,
     float epsip   = psip - psidp; 
 
     // Controlador Phi
-    float S_phi       =  ephip + k1_phi * ephi;
-    // Usando el signo
-    // float tau_phi_n   = -k1_phi * ephip - k2_phi * sign(S_phi);
-    // Usando la saturacion. 
-    float tau_phi_n   = -k1_phi * ephip - k2_phi * clamp(S_phi/phi,-1,1);
+    float nu_phi    = - k1_phi * ephi - phidp;
+    float ephi2     =   phip - nu_phi;
+    float tau_phi_n = - k1_phi * ephip - k2_phi * ephi2; 
 
 
     // Controlador Theta
-    float S_theta     =  ethetap + k1_theta * etheta;
-    // Usando el signo
-    // float tau_theta_n = -k1_theta * ethetap - k2_theta * sign(S_theta);
-    // Usando la saturacion
-    float tau_theta_n = -k1_theta * ethetap - k2_theta * clamp(S_theta/theta,-1,1);
+    float nu_theta    = - k1_theta * etheta - thetadp;
+    float etheta2     =   thetap - nu_theta;
+    float tau_theta_n = - k1_theta * ethetap - k2_theta * etheta2;
 
     // Controlador Psi
-    float S_psi       =  epsip + k1_psi * epsi;
-    // Usando el signo
-    // float tau_psi_n   = -k1_psi * epsip - k2_psi * sign(S_psi);
-    // Usando la saturacion
-    float tau_psi_n   = -k1_psi * epsip - k2_psi * clamp(S_psi/psi,-1,1);
-
+    float nu_psi     = - k1_psi * epsi - psidp;
+    float epsi2      =   psip - nu_psi;
+    float tau_psi_n  = - k1_psi * epsip - k2_psi * epsi2; 
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
@@ -228,14 +221,14 @@ void controllermd(control_t *control, setpoint_t *setpoint,
 
     attitudeControllerResetAllPID();
     positionControllerResetAllPID();
-    controllermdReset();
+    controllerbsReset();
 
     // Reset the calculated YAW angle for rate control
     attitudeDesired.yaw = state->attitude.yaw;
   }
 }
 
-PARAM_GROUP_START(ctrlSlidingModes)
+PARAM_GROUP_START(Backstepping)
 PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
 PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
 
@@ -245,11 +238,11 @@ PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
 PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
 PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
 
-PARAM_GROUP_STOP(ctrlSlidingModes)
+PARAM_GROUP_STOP(Backstepping)
 
-LOG_GROUP_START(SlidingModes)
+LOG_GROUP_START(Backstepping)
 LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
 LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
-LOG_GROUP_STOP(SlidingModes)
+LOG_GROUP_STOP(Backstepping)

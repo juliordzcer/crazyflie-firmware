@@ -23,6 +23,7 @@ fw_sources = [
     "src/modules/src/controller_pid.c",
     "src/modules/src/controller_tc.c",
     "src/modules/src/controller_md.c",
+    "src/modules/src/controller_bs.c",
     "src/modules/src/position_controller_pid.c",
     "src/modules/src/attitude_pid_controller.c",
     "src/modules/src/attitude_tc_controller.c",
