@@ -29,9 +29,9 @@ static ControllerFcns controllerFunctions[] = {
   {.init = controllerPidInit, .test = controllerPidTest, .update = controllerPid, .name = "PID"},
   {.init = controllerMellingerInit, .test = controllerMellingerTest, .update = controllerMellinger, .name = "Mellinger"},
   {.init = controllerINDIInit, .test = controllerINDITest, .update = controllerINDI, .name = "INDI"},
-  {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "TC"},
-  {.init = controllermdInit, .test = controllermdTest, .update = controllermd, .name = "MD"},
-  {.init = controllerbsInit, .test = controllerbsTest, .update = controllerbs, .name = "BS"},
+  {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "Twisting"},
+  {.init = controllermdInit, .test = controllermdTest, .update = controllermd, .name = "Sliding Mode"},
+  {.init = controllerbsInit, .test = controllerbsTest, .update = controllerbs, .name = "Backstepping"},
 };
 
 

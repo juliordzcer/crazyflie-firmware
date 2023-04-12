@@ -37,14 +37,19 @@ config CONTROLLER_MELLINGER
         Use the Mellinger controller as default
 
 config CONTROLLER_TC
-    bool "TC controller"
+    bool "Twisting controller"
     help
-        Use the TC controller as default
+        Use the Twisting controller as default
 
 config CONTROLLER_MD
-    bool "MD controller"
+    bool "Sliding Mode controller"
     help
-        Use the MD controller as default
+        Use the Sliding Mode controller as default
+
+config CONTROLLER_BS
+    bool "Backstepping controller"
+    help
+        Use the Backstepping controller as default
 
 endchoice
 
