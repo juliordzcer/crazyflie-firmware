@@ -96,7 +96,7 @@ Warning: if multiple Crazyflies within range are in bootloader mode the result i
 
 #### Automatically enter bootloader mode
 * Make sure the Crazyflie is on
-* In your terminal, run `CLOAD_CMDS="-w radio://0/80/2M" make cload`
+* In your terminal, run `CLOAD_CMDS="-w radio://0/80/2M/E7E7E7E7E7" make cload`
 
 It will connect to the Crazyflie with the specified address, put it in bootloader mode and flash the binary. This method is suitable for classroom situations.
 
@@ -141,8 +141,7 @@ pip3 install --upgrade pip
 ```
 
 #### Installing the client
-##### From Pypi (Windows, Mac, Linux, ..., with python3)
-
+##### From Pypi 
 Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/), so it can be installed with pip:
 
 ```
@@ -178,26 +177,23 @@ the administrator password, you should run the command with ```--user```
 though since the *--user*  flag seems to be the default behavior.
 
 ## Crazyflie Library Python
+### Install from Source
 
-
-## Installation
-
- ```
+#### From Pypi 
+```
 pip3 install cflib
  ```
-
-## Install from Source
-### Clone  the repository
+#### Clone  the repository
  ```
  git clone https://github.com/bitcraze/crazyflie-lib-python.git
  ```
-### Install cflib from source
+#### Install cflib from source
  ```
  cd crazyflie-lib-python
  pip3 install -e .
  ```
 
-### Uninstall cflib
+#### Uninstall cflib
 
  ```
 pip3 uninstall cflib
