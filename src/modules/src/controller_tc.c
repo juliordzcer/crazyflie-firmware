@@ -18,9 +18,9 @@
 
 // Ganancias TC
 
-static float zeta_phi   = 0.000361;  //0.00165f;
-static float zeta_theta = 0.000361;  //0.00165f;
-static float zeta_psi   = 0.0004;  //0.0018f;
+static float zeta_phi   = 0.000261;  //0.00165f;
+static float zeta_theta = 0.000261;  //0.00165f;
+static float zeta_psi   = 0.00028;  //0.0018f;
 
 static int gain = 2;
 
