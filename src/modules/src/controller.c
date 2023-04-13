@@ -13,7 +13,7 @@
 
 #include "autoconf.h"
 
-#define DEFAULT_CONTROLLER ControllerTypeTC
+#define DEFAULT_CONTROLLER ControllerTypeSTA
 static ControllerType currentController = ControllerTypeAny;
 
 static void initController();

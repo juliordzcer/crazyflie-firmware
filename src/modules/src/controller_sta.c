@@ -18,17 +18,17 @@
 
 // Ganancias STA
 
-static float k0_phi = 0.0f;
-static float k1_phi = 0.0f;
-static float k2_phi = 0.0f;
+static float k0_phi = 3.0f;
+static float k1_phi = 180.0f;
+static float k2_phi = 55.0f;
 
-static float k0_theta = 0.0f;
-static float k1_theta = 0.0f;
-static float k2_theta = 0.0f;
+static float k0_theta = 3.0f;
+static float k1_theta = 180.0f;
+static float k2_theta = 55.0f;
 
-static float k0_psi = 0.0f;
-static float k1_psi = 0.0f;
-static float k2_psi = 0.0f;
+static float k0_psi = 3.0f;
+static float k1_psi = 180.0f;
+static float k2_psi = 55.0f;
 
 static float iephi = 0;
 static float ietheta = 0;
@@ -175,32 +175,29 @@ void controllersta(control_t *control, setpoint_t *setpoint,
     // Errores de orientacion [Rad].
 
     // Error de orientacion.
-    float ephi   = phi - phid;
-    float etheta = theta - thetad;
-    float epsi   = psi - psid;    
+    float ephi   = phid - phi;
+    float etheta = thetad - theta;
+    float epsi   = psid - psi;    
     
     // Error de velocidad angular
-    float ephip   = phip - phidp;
-    float ethetap = thetap - thetadp;
-    float epsip   = psip - psidp; 
+    float ephip   = phidp - phip;
+    float ethetap = thetadp - thetap;
+    float epsip   = psidp - psip; 
 
     // Control de Phi 
     float S_phi = ephip + k0_phi*ephi;
-    nu_phi += (-k2_phi * sign(S_phi)) * dt;
-    nu_phi = clamp(nu_phi, -1,1);
-    float tau_phi_n = nu_phi - k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi);
+    nu_phi += (sign(S_phi)) * dt;
+    float tau_phi_n = k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi) + k2_phi * nu_phi;
 
     // Control de theta 
     float S_theta = ethetap + k0_theta*etheta;
-    nu_theta += (-k2_theta * sign(S_theta)) * dt;
-    nu_theta = clamp(nu_theta, -1,1);
-    float tau_theta_n = nu_theta - k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta);
+    nu_theta += (sign(S_theta)) * dt;
+    float tau_theta_n = k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) + k2_theta * nu_theta;
    
     // Control de psi 
     float S_psi = epsip + k0_phi*epsi;
-    nu_psi += (-k2_psi * sign(S_psi)) * dt;
-    nu_psi = clamp(nu_psi, -1,1);
-    float tau_psi_n = nu_psi - k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi);
+    nu_psi += (sign(S_psi)) * dt;
+    float tau_psi_n = k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + k2_psi * nu_psi;
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
