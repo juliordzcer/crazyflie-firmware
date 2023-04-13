@@ -17,6 +17,7 @@ To be able to execute the programs it is necessary to install the following depe
 sudo apt-get update
 sudo apt install python3-pip
 sudo apt-get install make gcc-arm-none-eabi
+sudo apt install git
 ```
 ### Cloning
 This repository uses git submodules. Clone with the `--recursive` flag
@@ -100,3 +101,81 @@ Warning: if multiple Crazyflies within range are in bootloader mode the result i
 It will connect to the Crazyflie with the specified address, put it in bootloader mode and flash the binary. This method is suitable for classroom situations.
 
 Note: this method does not work if the Crazyflie does not start, for instance if the current flashed binary is corrupt. You will have to fall back to manually entering bootloader mode.
+
+
+## USB permissions
+The following steps make it possible to use the USB Radio and Crazyflie 2 over USB without being root.
+```
+sudo groupadd plugdev
+sudo usermod -a -G plugdev $USER
+```
+
+You will need to log out and log in again in order to be a member of the plugdev group.
+
+Copy-paste the following in your console, this will create the file `/etc/udev/rules.d/99-bitcraze.rules`:
+
+```
+cat <<EOF | sudo tee /etc/udev/rules.d/99-bitcraze.rules > /dev/null
+# Crazyradio (normal operation)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="7777", MODE="0664", GROUP="plugdev"
+# Bootloader
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1915", ATTRS{idProduct}=="0101", MODE="0664", GROUP="plugdev"
+# Crazyflie (over USB)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE="0664", GROUP="plugdev"
+EOF
+```
+You can reload the udev-rules using the following:
+```
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
+
+## Crazyflie Client
+### Prerequisites
+
+This project requires Python 3.7+.
+
+```
+sudo apt install git python3-pip libxcb-xinerama0
+pip3 install --upgrade pip
+```
+
+
+
+#### Installing the client
+##### From Pypi (Windows, Mac, Linux, ..., with python3)
+
+Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/), so it can be installed with pip:
+
+```
+pip3 install cfclient
+```
+
+##### Installing from source
+Clone the repository with git
+
+```
+git clone https://github.com/bitcraze/crazyflie-clients-python
+cd crazyflie-clients-python
+```
+
+All other dependencies on linux are handled by pip so to install an editable copy simply run:
+
+```
+$ pip3 install -e .
+```
+
+If you plan to do development on the client you should run:
+```
+$ pip3 install -e .[dev]
+```
+
+The client can now be run if the local pip bin directory is in the path (it should be in a
+venv or after a reboot).
+
+Avoid running pip in sudo, this would install dependencies system wide and could cause
+compatibility problems with already installed applications. If the ```pip``` of ```python3 -m pip``` command request
+the administrator password, you should run the command with ```--user```
+(for example ```python3 -m pip install --user -e .```). This should not be required on modern python distribution
+though since the *--user*  flag seems to be the default behavior.
+
