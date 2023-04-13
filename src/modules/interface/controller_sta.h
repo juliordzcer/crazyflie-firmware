@@ -1,8 +1,9 @@
+
 #include "stabilizer_types.h"
 
-void controllertcInit(void);
-bool controllertcTest(void);
-void controllertc(control_t *control, setpoint_t *setpoint,
+void controllerstaInit(void);
+bool controllerstaTest(void);
+void controllersta(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick);
