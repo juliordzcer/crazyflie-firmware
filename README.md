@@ -140,8 +140,6 @@ sudo apt install git python3-pip libxcb-xinerama0
 pip3 install --upgrade pip
 ```
 
-
-
 #### Installing the client
 ##### From Pypi (Windows, Mac, Linux, ..., with python3)
 
@@ -179,3 +177,28 @@ the administrator password, you should run the command with ```--user```
 (for example ```python3 -m pip install --user -e .```). This should not be required on modern python distribution
 though since the *--user*  flag seems to be the default behavior.
 
+## Crazyflie Library Python
+
+
+## Installation
+
+ ```
+pip3 install cflib
+ ```
+
+## Install from Source
+### Clone  the repository
+ ```
+ git clone https://github.com/bitcraze/crazyflie-lib-python.git
+ ```
+### Install cflib from source
+ ```
+ cd crazyflie-lib-python
+ pip3 install -e .
+ ```
+
+### Uninstall cflib
+
+ ```
+pip3 uninstall cflib
+ ```
