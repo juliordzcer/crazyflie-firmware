@@ -36,6 +36,21 @@ config CONTROLLER_MELLINGER
     help
         Use the Mellinger controller as default
 
+config CONTROLLER_TC
+    bool "Twisting controller"
+    help
+        Use the Twisting controller as default
+
+config CONTROLLER_SMC
+    bool "Sliding Mode controller"
+    help
+        Use the Sliding Mode controller as default
+
+config CONTROLLER_BC
+    bool "Backstepping controller"
+    help
+        Use the Backstepping controller as default
+
 endchoice
 
 config ESTIMATOR_KALMAN_ENABLE
