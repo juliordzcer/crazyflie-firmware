@@ -18,22 +18,18 @@
 
 // Ganancias del controlador de orientacion.
 
-static float k0_phi = 0.001f;
-static float zeta_phi = 0.07f; 
+static float k0_phi = 0.15f;
+static float zeta_phi = 0.075f; 
 
-static float k0_theta = 0.001f;
-static float zeta_theta = 0.07f; 
+static float k0_theta = 0.15f;
+static float zeta_theta = 0.075f; 
 
-static float k0_psi = 0.01f;
-static float zeta_psi = 0.08f; 
+static float k0_psi = 0.12f;
+static float zeta_psi = 0.06f; 
 
 static float iephi = 0;
 static float ietheta = 0;
 static float iepsi = 0;
-
-static float phidp_prev = 0;
-static float thetadp_prev = 0;
-static float psidp_prev = 0;
 
 static float nu_phi = 0;
 static float nu_theta = 0;
@@ -64,9 +60,8 @@ void controllerstaReset(void)
   nu_theta = 0;
   nu_psi = 0;
 
-  phidp_prev = 0;
-  thetadp_prev = 0;
-  psidp_prev = 0;
+  attitudeControllerResetAllPID();
+  positionControllerResetAllPID();
 }
 
 void controllerstaInit(void)
@@ -164,11 +159,6 @@ void controllersta(control_t *control, setpoint_t *setpoint,
 
     float dt = ATTITUDE_UPDATE_DT;
 
-    // Momentos de inercia
-    float Jx=9.827e-05;
-    float Jy=8.185e-05;
-    float Jz=9.613e-05;
-
     float k1_phi = 1.5f*powf(zeta_phi,2.0f/3.0f);
     float k2_phi = 1.1f*zeta_phi;
 
@@ -187,10 +177,6 @@ void controllersta(control_t *control, setpoint_t *setpoint,
     float thetadp = radians(rateDesired.pitch);
     float psidp   = radians(rateDesired.yaw);
 
-    float phidpp   = (phidp - phidp_prev) / dt;
-    float thetadpp = (thetadp - thetadp_prev) / dt;
-    float psidpp   = (psidp - psidp_prev) / dt;
-
     float phi   = radians(state->attitude.roll);
     float theta = radians(state->attitude.pitch);
     float psi   = radians(state->attitude.yaw);
@@ -202,51 +188,44 @@ void controllersta(control_t *control, setpoint_t *setpoint,
     // Errores de orientacion [Rad].
 
     // Error de orientacion.
-    float ephi   = phi - phid;
-    float etheta = theta - thetad;
-    float epsi   = psi - psid;    
+    float ephi   = phid - phi;
+    float etheta = thetad - theta;
+    float epsi   = psid - psi;    
     
     // Error de velocidad angular
-    float ephip   = phip - phidp;
-    float ethetap = thetap - thetadp;
-    float epsip   = psip - psidp; 
+    float ephip   = phidp - phip;
+    float ethetap = thetadp - thetap;
+    float epsip   = psidp - psip; 
 
     // Control de Phi 
     float S_phi = ephip + k0_phi*ephi;
     nu_phi += (sign(S_phi)) * dt;
-    float tau_bar_phi = - k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi) - k2_phi * nu_phi;
-    float tau_phi = Jx * ( tau_bar_phi - ((Jy-Jz)/Jx) * thetap * psip + phidpp);
+    float tau_phi_n = k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi) + k2_phi * nu_phi;
 
     // Control de theta 
     float S_theta = ethetap + k0_theta*etheta;
     nu_theta += (sign(S_theta)) * dt;
-    float tau_bar_theta = - k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) - k2_theta * nu_theta;
-    float tau_theta = Jy * ( tau_bar_theta - ((Jz-Jx)/Jy) * phip * psip + thetadpp);
-
+    float tau_theta_n = k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) + k2_theta * nu_theta;
+   
     // Control de psi 
     float S_psi = epsip + k0_phi*epsi;
     nu_psi += (sign(S_psi)) * dt;
-    float tau_bar_psi = - k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) - k2_psi * nu_psi;
-    float tau_psi = Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip + psidpp);
+    float tau_psi_n = k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + k2_psi * nu_psi;
 
-    control->roll  = clamp(calculate_rpm(tau_phi), -32000, 32000);
-    control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
-    control->yaw   = clamp(calculate_rpm(tau_psi), -32000, 32000);
+    control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
+    control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
+    control->yaw = clamp(calculate_rpm(tau_psi_n), -32000, 32000);
     
     control->yaw = -control->yaw;
 
     cmd_thrust = control->thrust;
-    cmd_roll   = control->roll;
-    cmd_pitch  = control->pitch;
-    cmd_yaw    = control->yaw;
+    cmd_roll = control->roll;
+    cmd_pitch = control->pitch;
+    cmd_yaw = control->yaw;
 
-    cmd_roll_n  = tau_phi;
-    cmd_pitch_n = tau_theta;
-    cmd_yaw_n   = tau_psi;
-
-    phidp_prev   = phidp;
-    thetadp_prev = thetadp;
-    psidp_prev   = psidp;
+    cmd_roll_n = tau_phi_n;
+    cmd_pitch_n = tau_theta_n;
+    cmd_yaw_n = tau_psi_n;
 
   }
 
@@ -264,8 +243,6 @@ void controllersta(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    attitudeControllerResetAllPID();
-    positionControllerResetAllPID();
     controllerstaReset();
 
     // Reset the calculated YAW angle for rate control
