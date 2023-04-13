@@ -277,7 +277,7 @@ void controllertc(control_t *control, setpoint_t *setpoint,
 
     // Control de theta 
     nu_theta += (k2_theta * sign(etheta) + k3_theta * sign(ethetap)) * dt;
-    float tau_theta_n = nu_theta - k0_theta * powf(fabsf(etheta), 1.0f/3.0f) * sign(etheta) - k1_theta * powf(fabsf(ethetap), 1.0f/2.0f) * sign(ethetap);
+    float tau_theta_n = nu_theta + k0_theta * powf(fabsf(etheta), 1.0f/3.0f) * sign(etheta) + k1_theta * powf(fabsf(ethetap), 1.0f/2.0f) * sign(ethetap);
 
     // Control de psi 
     nu_psi += (k2_psi * sign(epsi) + k3_psi * sign(epsip)) * dt;
