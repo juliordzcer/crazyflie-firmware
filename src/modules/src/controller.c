@@ -8,12 +8,13 @@
 #include "controller_smc.h"
 #include "controller_bc.h"
 #include "controller_sta.h"
+#include "controller_ntsmc.h"
 #include "controller_mellinger.h"
 #include "controller_indi.h"
 
 #include "autoconf.h"
 
-#define DEFAULT_CONTROLLER ControllerTypeBC
+#define DEFAULT_CONTROLLER ControllerTypeNTSMC
 static ControllerType currentController = ControllerTypeAny;
 
 static void initController();
@@ -34,6 +35,7 @@ static ControllerFcns controllerFunctions[] = {
   {.init = controllerbcInit, .test = controllerbcTest, .update = controllerbc, .name = "Backstepping"},
   {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "Twisting"},
   {.init = controllerstaInit, .test = controllerstaTest, .update = controllersta, .name = "Super-Twisting"},
+  {.init = controllerntsmcInit, .test = controllerntsmcTest, .update = controllerntsmc, .name = "Nonsingular-Terminal"},
 };
 
 
@@ -62,6 +64,8 @@ void controllerInit(ControllerType controller) {
     #define CONTROLLER ControllerTypeTC
   #elif defined(CONFIG_CONTROLLER_STA)
     #define CONTROLLER ControllerTypeSTA
+  #elif defined(CONFIG_CONTROLLER_NTSMC)
+    #define CONTROLLER ControllerTypeNTSMC
   #else
     #define CONTROLLER ControllerTypeAny
   #endif

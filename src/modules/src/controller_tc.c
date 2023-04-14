@@ -194,17 +194,17 @@ void controllertc(control_t *control, setpoint_t *setpoint,
         break;
       case 3:
         k0_phi = 13.0f*powf(zeta_phi,2.0f/3.0f);
-        k1_phi = 10.0f*powf(zeta_phi,1.0f/2.0f);
+        k1_phi = 7.5f*powf(zeta_phi,1.0f/2.0f);
         k2_phi = 2.3f*zeta_phi;
         k3_phi = 1.1f*zeta_phi;
 
         k0_theta = 13.0f*powf(zeta_theta,2.0f/3.0f);
-        k1_theta = 10.0f*powf(zeta_theta,1.0f/2.0f);
+        k1_theta = 7.5f*powf(zeta_theta,1.0f/2.0f);
         k2_theta = 2.3f*zeta_theta;
         k3_theta = 1.1f*zeta_theta;
 
-        k0_psi = 7.0f*powf(zeta_psi,2.0f/3.0f);
-        k1_psi = 5.0f*powf(zeta_psi,1.0f/2.0f);
+        k0_psi = 13.0f*powf(zeta_psi,2.0f/3.0f);
+        k1_psi = 7.5f*powf(zeta_psi,1.0f/2.0f);
         k2_psi = 2.3f*zeta_psi;
         k3_psi = 1.1f*zeta_psi;
         break;

@@ -1,8 +1,11 @@
+#include <math.h>
+
 #include "stabilizer_types.h"
 
 #include "attitude_controller.h"
 #include "position_controller.h"
-#include "controller_bc.h"
+#include "position_controller.h"
+#include "controller_stsmc.h"
 
 
 #include "commander.h"
@@ -13,18 +16,22 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 0.001f;
-static float k2_phi = 0.34f;
+// Ganancias TC
 
-static float k1_theta = 0.001f;
-static float k2_theta = 0.34f;
+static float zeta_phi   = 0.0f;
+static float k0_phi   = 0.0f;
+static float zeta_theta = 0.0f;
+static float k0_theta = 0.0f;
+static float zeta_psi   = 0.0f;
+static float k0_psi   = 0.0f;
 
-static float k1_psi = 0.0025f;
-static float k2_psi = 0.22f;
-
-static float iephi   = 0;
+static float iephi = 0;
 static float ietheta = 0;
-static float iepsi   = 0;
+static float iepsi = 0;
+
+static float nu_phi = 0;
+static float nu_theta = 0;
+static float nu_psi = 0;
 
 static attitude_t attitudeDesired;
 static attitude_t rateDesired;
@@ -40,24 +47,29 @@ static float cmd_pitch_n;
 static float cmd_yaw_n;
 
 
-void controllerbcReset(void)
+
+void controllerstsmcReset(void)
 {
   iephi = 0;
   ietheta = 0;
   iepsi = 0;
 
+  nu_phi = 0;
+  nu_theta = 0;
+  nu_psi = 0;
+  
   attitudeControllerResetAllPID();
   positionControllerResetAllPID();
 }
 
-void controllerbcInit(void)
+void controllerstsmcInit(void)
 {
   attitudeControllerInit(ATTITUDE_UPDATE_DT);
   positionControllerInit();
-  controllerbcReset();
+  controllerstsmcReset();
 }
 
-bool controllerbcTest(void)
+bool controllerstsmcTest(void)
 {
   bool pass = true;
   pass &= attitudeControllerTest();
@@ -78,7 +90,7 @@ static float capAngle(float angle) {
   return result;
 }
 
-void controllerbc(control_t *control, setpoint_t *setpoint,
+void controllerstsmc(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
@@ -143,8 +155,18 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
       attitudeControllerResetPitchAttitudePID();
     }
 
-    // Conversion de a radianes 
+    float dt = ATTITUDE_UPDATE_DT;
+    
+    float k1_phi = 1.5f*powf(zeta_phi,1.0f/2.0f);
+    float k2_phi = 1.1f*zeta_phi;
 
+    float k1_theta = 1.5f*powf(zeta_theta,1.0f/2.0f);
+    float k2_theta = 1.1f*zeta_theta;
+
+    float k1_psi = 1.5f*powf(zeta_psi,1.0f/2.0f);
+    float k2_psi = 1.1f*zeta_psi;
+  
+    // Conversion de a radianes
     float phid   = radians(attitudeDesired.roll);
     float thetad = radians(attitudeDesired.pitch);
     float psid   = radians(attitudeDesired.yaw);
@@ -167,26 +189,26 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     float ephi   = phid - phi;
     float etheta = thetad - theta;
     float epsi   = psid - psi;    
-
+    
     // Error de velocidad angular
     float ephip   = phidp - phip;
     float ethetap = thetadp - thetap;
     float epsip   = psidp - psip; 
 
-    // Control de Phi
-    float nu_phi = phidp + k1_phi * ephi;
-    float ephi2 = nu_phi - phip;
-    float tau_phi_n = ephi + k1_phi * ephip + k2_phi * ephi2;
+    // Control de Phi 
+    float S_phi = ephip + k0_phi * powf(fabsf(ephi), 2.0f / 3.0f) * sign(ephi);
+    nu_phi += (-k2_phi * sign(S_phi)) * dt;
+    float tau_phi_n = nu_phi - k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi);
 
     // Control de Theta
-    float nu_theta = k1_theta * etheta + thetadp;
-    float etheta2 = nu_theta - thetap;
-    float tau_theta_n = etheta + k1_theta * ethetap + k2_theta * etheta2;
+    float S_theta = ethetap + k0_theta * powf(fabsf(etheta), 2.0f / 3.0f) * sign(etheta);
+    nu_theta += (-k2_theta * sign(S_theta)) * dt;
+    float tau_theta_n = -k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) + nu_theta;
 
     // Control de Psi
-    float nu_psi = k1_psi * epsi + psidp;
-    float epsi2 = nu_psi - psip;
-    float tau_psi_n = epsi + k1_psi * epsip + k2_psi * epsi2;
+    float S_psi = epsip + k0_psi * powf(fabsf(epsi), 2.0f / 3.0f) * sign(epsi);
+    nu_psi += (-k2_psi * sign(S_psi)) * dt;
+    float tau_psi_n = -k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + nu_psi;
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
@@ -219,26 +241,22 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    controllerbcReset();
+    controllerstsmcReset();
 
-    // Reset the calculated YAW angle for rate control
     attitudeDesired.yaw = state->attitude.yaw;
   }
 }
 
-PARAM_GROUP_START(Backstepping)
-PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
-PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
+PARAM_GROUP_START(SingularTerminal)
+PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
+PARAM_ADD(PARAM_FLOAT, k0_phi, &k0_phi)
+PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
+PARAM_ADD(PARAM_FLOAT, k0_theta, &k0_theta)
+PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
+PARAM_ADD(PARAM_FLOAT, k0_psi, &k0_psi)
+PARAM_GROUP_STOP(SingularTerminal)
 
-PARAM_ADD(PARAM_FLOAT, k1_theta, &k1_theta)
-PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
-
-PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
-PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
-
-PARAM_GROUP_STOP(Backstepping)
-
-LOG_GROUP_START(Backstepping)
+LOG_GROUP_START(SingularTerminal)
 LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
@@ -246,4 +264,4 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
-LOG_GROUP_STOP(Backstepping)
+LOG_GROUP_STOP(SingularTerminal)

@@ -15,6 +15,7 @@ obj-y += controller_tc.o
 obj-y += controller_smc.o
 obj-y += controller_bc.o
 obj-y += controller_sta.o
+obj-y += controller_ntsmc.o
 obj-y += crtp_commander_generic.o
 obj-y += crtp_commander_high_level.o
 obj-y += crtp_commander.o

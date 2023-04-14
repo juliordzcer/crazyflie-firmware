@@ -56,6 +56,11 @@ config CONTROLLER_STA
     help
         Use the Super-Twisting controller as default
 
+config CONTROLLER_NTSMC
+    bool "Nonsingular-Terminal controller"
+    help
+        Use the Nonsingular-Terminal controller as default
+
 endchoice
 
 config ESTIMATOR_KALMAN_ENABLE

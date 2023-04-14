@@ -37,6 +37,7 @@ typedef enum {
   ControllerTypeBC,
   ControllerTypeTC,
   ControllerTypeSTA,
+  ControllerTypeNTSMC,
   ControllerType_COUNT,
 } ControllerType;
 
