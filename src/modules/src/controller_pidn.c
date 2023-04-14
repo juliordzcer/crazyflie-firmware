@@ -2,7 +2,7 @@
 
 #include "attitude_controller.h"
 #include "position_controller.h"
-#include "controller_smc.h"
+#include "controller_pidn.h"
 
 
 #include "commander.h"
@@ -13,14 +13,17 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 0.13;
-static float k2_phi = 0.022;
+static float kp_phi = 0.0f;
+static float ki_phi = 0.0f;
+static float kd_phi = 0.0f;
 
-static float k1_theta = 0.13;
-static float k2_theta = 0.022;
+static float kp_theta = 0.0f;
+static float ki_theta = 0.0f;
+static float kd_theta = 0.0f;
 
-static float k1_psi = 0.11;
-static float k2_psi = 0.022;
+static float kp_psi = 0.0f;
+static float ki_psi = 0.0f;
+static float kd_psi = 0.0f;
 
 static float iephi = 0.0f;
 static float ietheta = 0.0f;
@@ -40,7 +43,7 @@ static float cmd_pitch_n;
 static float cmd_yaw_n;
 
 
-void controllersmcReset(void)
+void controllerpidnReset(void)
 {
   iephi = 0;
   ietheta = 0;
@@ -50,14 +53,14 @@ void controllersmcReset(void)
   positionControllerResetAllPID();
 }
 
-void controllersmcInit(void)
+void controllerpidnInit(void)
 {
   attitudeControllerInit(ATTITUDE_UPDATE_DT);
   positionControllerInit();
-  controllersmcReset();
+  controllerpidnReset();
 }
 
-bool controllersmcTest(void)
+bool controllerpidnTest(void)
 {
   bool pass = true;
   pass &= attitudeControllerTest();
@@ -78,7 +81,7 @@ static float capAngle(float angle) {
   return result;
 }
 
-void controllersmc(control_t *control, setpoint_t *setpoint,
+void controllerpidn(control_t *control, setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
@@ -143,6 +146,7 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
       attitudeControllerResetPitchAttitudePID();
     }
 
+    float dt = ATTITUDE_UPDATE_DT;
     // Conversion de a radianes 
 
     float phid   = radians(attitudeDesired.roll);
@@ -165,6 +169,14 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
     float ephi   = phid - phi;
     float etheta = thetad - theta;
     float epsi   = psid - psi;    
+       
+    // Integral del error de orientacion.
+    iephi   = iephi + ephi * dt;
+    iephi = clamp(iephi, -1,1);
+    ietheta = ietheta + etheta * dt;
+    ietheta = clamp(ietheta, -1,1);
+    iepsi   = iepsi + epsi * dt;
+    iepsi = clamp(iepsi, -1500,1500);
     
     // Error de velocidad angular
     float ephip   = phidp - phip;
@@ -173,27 +185,13 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
 
 
     // Controlador Phi
-    float S_phi       =  ephip + k1_phi * ephi;
-    // Usando el signo
-    // float tau_phi_n   = k1_phi * ephip + k2_phi * sign(S_phi);
-    // Usando la saturacion. 
-    float tau_phi_n   = k1_phi * ephip + k2_phi * clamp(S_phi/0.2f,-1,1);
-
+    float tau_phi_n   = kp_phi * ephi + ki_phi * iephi + kd_phi * ephip;
 
     // Controlador Theta
-    float S_theta     =  ethetap + k1_theta * etheta;
-    // Usando el signo
-    // float tau_theta_n = k1_theta * ethetap + k2_theta * sign(S_theta);
-    // Usando la saturacion
-    float tau_theta_n = k1_theta * ethetap + k2_theta * clamp(S_theta/0.2f,-1,1);
+    float tau_theta_n = kp_theta * etheta + ki_theta * ietheta + kd_theta * ethetap;
 
     // Controlador Psi
-    float S_psi       =  epsip + k1_psi * epsi;
-    // Usando el signo
-    // float tau_psi_n   = -k1_psi * epsip - k2_psi * sign(S_psi);
-    // Usando la saturacion
-    float tau_psi_n   = k1_psi * epsip + k2_psi * clamp(S_psi/0.2f,-1,1);
-
+    float tau_psi_n   = kp_psi * epsi + ki_psi * iepsi + kd_psi * epsip;
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
@@ -227,25 +225,28 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
     cmd_yaw = control->yaw;
 
 
-    controllersmcReset();
+    controllerpidnReset();
 
     // Reset the calculated YAW angle for rate control
     attitudeDesired.yaw = state->attitude.yaw;
   }
 }
 
-PARAM_GROUP_START(SMC)
-PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
-PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
+PARAM_GROUP_START(PIDN)
+PARAM_ADD(PARAM_FLOAT, kp_phi, &kp_phi)
+PARAM_ADD(PARAM_FLOAT, ki_phi, &ki_phi)
+PARAM_ADD(PARAM_FLOAT, kd_phi, &kd_phi)
 
-PARAM_ADD(PARAM_FLOAT, k1_theta, &k1_theta)
-PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
+PARAM_ADD(PARAM_FLOAT, kp_theta, &kp_theta)
+PARAM_ADD(PARAM_FLOAT, ki_theta, &ki_theta)
+PARAM_ADD(PARAM_FLOAT, kd_theta, &kd_theta)
 
-PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
-PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
-PARAM_GROUP_STOP(SMC)
+PARAM_ADD(PARAM_FLOAT, kp_psi, &kp_psi)
+PARAM_ADD(PARAM_FLOAT, ki_psi, &ki_psi)
+PARAM_ADD(PARAM_FLOAT, kd_psi, &kd_psi)
+PARAM_GROUP_STOP(PIDN)
 
-LOG_GROUP_START(SMC)
+LOG_GROUP_START(PIDN)
 LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
@@ -253,4 +254,4 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
-LOG_GROUP_STOP(SMC)
+LOG_GROUP_STOP(PIDN)
