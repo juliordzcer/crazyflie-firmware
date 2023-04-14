@@ -18,13 +18,13 @@
 
 // Ganancias del controlador de orientacion.
 
-static float k0_phi = 0.15f;
+static float k0_phi = 0.35f;
 static float zeta_phi = 0.075f; 
 
-static float k0_theta = 0.15f;
+static float k0_theta = 0.35f;
 static float zeta_theta = 0.075f; 
 
-static float k0_psi = 0.12f;
+static float k0_psi = 0.27f;
 static float zeta_psi = 0.06f; 
 
 static float iephi = 0;
@@ -187,14 +187,14 @@ void controllerstsmc(control_t *control, setpoint_t *setpoint,
     // Errores de orientacion [Rad].
 
     // Error de orientacion.
-    float ephi   = phid - phi;
-    float etheta = thetad - theta;
-    float epsi   = psid - psi;    
+    float ephi   = phi - phid;
+    float etheta = theta - thetad;
+    float epsi   = psi - psid;    
     
     // Error de velocidad angular
-    float ephip   = phidp - phip;
-    float ethetap = thetadp - thetap;
-    float epsip   = psidp - psip; 
+    float ephip   = phip - phidp;
+    float ethetap = thetap - thetadp;
+    float epsip   = psip - psidp; 
 
     // Control de Phi 
     float S_phi = ephip + k0_phi * powf(fabsf(ephi), 2.0f / 3.0f) * sign(ephi);

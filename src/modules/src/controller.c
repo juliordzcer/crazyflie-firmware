@@ -15,7 +15,7 @@
 
 #include "autoconf.h"
 
-#define DEFAULT_CONTROLLER ControllerTypeTC
+#define DEFAULT_CONTROLLER ControllerTypeSTSMC
 static ControllerType currentController = ControllerTypeAny;
 
 static void initController();
