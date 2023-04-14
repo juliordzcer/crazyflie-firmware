@@ -13,18 +13,18 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 180;
-static float k2_phi = 8;
+static float k1_phi = 0.13;
+static float k2_phi = 0.022;
 
-static float k1_theta = 180;
-static float k2_theta = 8;
+static float k1_theta = 0.13;
+static float k2_theta = 0.022;
 
-static float k1_psi = 150;
-static float k2_psi = 8;
+static float k1_psi = 0.11;
+static float k2_psi = 0.022;
 
-static float iephi = 0;
-static float ietheta = 0;
-static float iepsi = 0;
+static float iephi = 0.6;
+static float ietheta = 0.5;
+static float iepsi = 0.6;
 
 static attitude_t attitudeDesired;
 static attitude_t rateDesired;
@@ -35,12 +35,19 @@ static float cmd_roll;
 static float cmd_pitch;
 static float cmd_yaw;
 
+static float cmd_roll_n;
+static float cmd_pitch_n;
+static float cmd_yaw_n;
+
 
 void controllersmcReset(void)
 {
   iephi = 0;
   ietheta = 0;
   iepsi = 0;
+
+  attitudeControllerResetAllPID();
+  positionControllerResetAllPID();
 }
 
 void controllersmcInit(void)
@@ -136,8 +143,6 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
       attitudeControllerResetPitchAttitudePID();
     }
 
-    float dt = ATTITUDE_UPDATE_DT;
-
     // Conversion de a radianes 
 
     float phid   = radians(attitudeDesired.roll);
@@ -157,46 +162,37 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
     float psip   = radians(sensors->gyro.z);
 
     // Errores de orientacion [Rad].
-
-    // Error de orientacion.
-    float ephi   = phi - phid;
-    float etheta = theta - thetad;
-    float epsi   = psi - psid;    
+    float ephi   = phid - phi;
+    float etheta = thetad - theta;
+    float epsi   = psid - psi;    
     
-    // Integral del error de orientacion.
-    iephi   = iephi + ephi * dt;
-    iephi = clamp(iephi, -1,1);
-    ietheta = ietheta + etheta * dt;
-    ietheta = clamp(ietheta, -1,1);
-    iepsi   = iepsi + epsi * dt;
-    iepsi = clamp(iepsi, -1500,1500);
-
     // Error de velocidad angular
-    float ephip   = phip - phidp;
-    float ethetap = thetap - thetadp;
-    float epsip   = psip - psidp; 
+    float ephip   = phidp - phip;
+    float ethetap = thetadp - thetap;
+    float epsip   = psidp - psip; 
+
 
     // Controlador Phi
     float S_phi       =  ephip + k1_phi * ephi;
     // Usando el signo
-    // float tau_phi_n   = -k1_phi * ephip - k2_phi * sign(S_phi);
+    // float tau_phi_n   = k1_phi * ephip + k2_phi * sign(S_phi);
     // Usando la saturacion. 
-    float tau_phi_n   = -k1_phi * ephip - k2_phi * clamp(S_phi/phi,-1,1);
+    float tau_phi_n   = k1_phi * ephip + k2_phi * clamp(S_phi/0.2f,-1,1);
 
 
     // Controlador Theta
     float S_theta     =  ethetap + k1_theta * etheta;
     // Usando el signo
-    // float tau_theta_n = -k1_theta * ethetap - k2_theta * sign(S_theta);
+    // float tau_theta_n = k1_theta * ethetap + k2_theta * sign(S_theta);
     // Usando la saturacion
-    float tau_theta_n = -k1_theta * ethetap - k2_theta * clamp(S_theta/theta,-1,1);
+    float tau_theta_n = k1_theta * ethetap + k2_theta * clamp(S_theta/0.2f,-1,1);
 
     // Controlador Psi
     float S_psi       =  epsip + k1_psi * epsi;
     // Usando el signo
     // float tau_psi_n   = -k1_psi * epsip - k2_psi * sign(S_psi);
     // Usando la saturacion
-    float tau_psi_n   = -k1_psi * epsip - k2_psi * clamp(S_psi/psi,-1,1);
+    float tau_psi_n   = k1_psi * epsip + k2_psi * clamp(S_psi/0.2f,-1,1);
 
 
     control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
@@ -209,6 +205,10 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
     cmd_roll = control->roll;
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
+
+    cmd_roll_n = tau_phi_n;
+    cmd_pitch_n = tau_theta_n;
+    cmd_yaw_n = tau_psi_n;
 
   }
 
@@ -226,8 +226,7 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    attitudeControllerResetAllPID();
-    positionControllerResetAllPID();
+
     controllersmcReset();
 
     // Reset the calculated YAW angle for rate control
@@ -252,4 +251,7 @@ LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
 LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
+LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
+LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
+LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
 LOG_GROUP_STOP(SlidingModes)
