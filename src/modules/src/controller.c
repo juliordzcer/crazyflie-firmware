@@ -7,12 +7,15 @@
 #include "controller_tc.h"
 #include "controller_smc.h"
 #include "controller_bc.h"
+#include "controller_sta.h"
+#include "controller_ntsmc.h"
+#include "controller_stsmc.h"
 #include "controller_mellinger.h"
 #include "controller_indi.h"
 
 #include "autoconf.h"
 
-#define DEFAULT_CONTROLLER ControllerTypeTC
+#define DEFAULT_CONTROLLER ControllerTypeSTSMC
 static ControllerType currentController = ControllerTypeAny;
 
 static void initController();
@@ -29,9 +32,12 @@ static ControllerFcns controllerFunctions[] = {
   {.init = controllerPidInit, .test = controllerPidTest, .update = controllerPid, .name = "PID"},
   {.init = controllerMellingerInit, .test = controllerMellingerTest, .update = controllerMellinger, .name = "Mellinger"},
   {.init = controllerINDIInit, .test = controllerINDITest, .update = controllerINDI, .name = "INDI"},
-  {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "Twisting"},
   {.init = controllersmcInit, .test = controllersmcTest, .update = controllersmc, .name = "Sliding Mode"},
   {.init = controllerbcInit, .test = controllerbcTest, .update = controllerbc, .name = "Backstepping"},
+  {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "Twisting"},
+  {.init = controllerstaInit, .test = controllerstaTest, .update = controllersta, .name = "Super-Twisting"},
+  {.init = controllerntsmcInit, .test = controllerntsmcTest, .update = controllerntsmc, .name = "Nonsingular-Terminal"},
+  {.init = controllerstsmcInit, .test = controllerstsmcTest, .update = controllerstsmc, .name = "Singular-Terminal"},
 };
 
 
@@ -52,12 +58,18 @@ void controllerInit(ControllerType controller) {
     #define CONTROLLER ControllerTypeINDI
   #elif defined(CONFIG_CONTROLLER_MELLINGER)
     #define CONTROLLER ControllerTypeMellinger
-  #elif defined(CONFIG_CONTROLLER_TC)
-    #define CONTROLLER ControllerTypeTC
   #elif defined(CONFIG_CONTROLLER_SMC)
     #define CONTROLLER ControllerTypeSMC
   #elif defined(CONFIG_CONTROLLER_BC)
     #define CONTROLLER ControllerTypeBC    
+  #elif defined(CONFIG_CONTROLLER_TC)
+    #define CONTROLLER ControllerTypeTC
+  #elif defined(CONFIG_CONTROLLER_STA)
+    #define CONTROLLER ControllerTypeSTA
+  #elif defined(CONFIG_CONTROLLER_NTSMC)
+    #define CONTROLLER ControllerTypeNTSMC
+  #elif defined(CONFIG_CONTROLLER_STSMC)
+    #define CONTROLLER ControllerTypeSTSMC
   #else
     #define CONTROLLER ControllerTypeAny
   #endif

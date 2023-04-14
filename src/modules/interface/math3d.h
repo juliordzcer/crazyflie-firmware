@@ -56,19 +56,30 @@ static inline float sign(float n){
 }
 
 
-static inline float calculate_rpm(float u) {
-  // Comprobar la validez de la entrada
-  if (isnan(u)) {
-    return 0.0f;
-  }
+// static inline float calculate_rpm(float u) {
+//   // Comprobar la validez de la entrada
+//   if (isnan(u)) {
+//     return 0.0f;
+//   }
   
-  // Calcular la fuerza de empuje en gramos
-  float thrust_gram = (float)fabs(u) * (float)(1.0f / 9.81f);
+//   // Calcular la fuerza de empuje en gramos
+//   float thrust_gram = (float)fabs(u) * (float)(1.0f / 9.81f);
 
-  // Calcular las RPM
-  float rpm = sign(u) * (sqrtf(4.0f * 0.109e-6f * (thrust_gram - 0.154f) + powf(-210.6e-6f, 2)) - -210.6e-6f) / (2.0f * 0.109e-6f);
+//   // Calcular las RPM
+//   float rpm = sign(u) * (sqrtf(4.0f * 0.109e-6f * (thrust_gram - 0.154f) + powf(-210.6e-6f, 2)) - -210.6e-6f) / (2.0f * 0.109e-6f);
 
-  return rpm;
+//   return rpm;
+// }
+
+static inline float calculate_rpm(float  thrust_newtons) {
+
+    float thrust_gramos = thrust_newtons / 0.00980665f;
+    float a = 1.0942e-07f;
+    float b = -2.1059e-04f;
+    float c = 1.5417e-01f;
+    float discriminante = powf(b, 2.0f) - 4.0f * a * (c - fabsf(thrust_gramos));
+    
+    return (-b + sqrtf(discriminante)) / (2.0f * a) * sign(thrust_gramos);
 }
 
 
