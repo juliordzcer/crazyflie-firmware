@@ -250,7 +250,7 @@ void controllersta(control_t *control, setpoint_t *setpoint,
   }
 }
 
-PARAM_GROUP_START(SuperTwisting)
+PARAM_GROUP_START(STA)
 PARAM_ADD(PARAM_FLOAT, k0_phi, &k0_phi)
 PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
 
@@ -260,9 +260,9 @@ PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
 PARAM_ADD(PARAM_FLOAT, k0_psi, &k0_psi)
 PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
 
-PARAM_GROUP_STOP(SuperTwisting)
+PARAM_GROUP_STOP(STA)
 
-LOG_GROUP_START(SuperTwisting)
+LOG_GROUP_START(STA)
 LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
@@ -270,4 +270,4 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
-LOG_GROUP_STOP(SuperTwisting)
+LOG_GROUP_STOP(STA)

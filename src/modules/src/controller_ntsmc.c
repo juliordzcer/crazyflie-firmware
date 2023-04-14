@@ -308,14 +308,14 @@ void controllerntsmc(control_t *control, setpoint_t *setpoint,
   }
 }
 
-PARAM_GROUP_START(Nonsingular )
+PARAM_GROUP_START(NTSMC)
 PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
 PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
 PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
 PARAM_ADD_CORE(PARAM_UINT8, gain, &gain)
-PARAM_GROUP_STOP(Nonsingular )
+PARAM_GROUP_STOP(NTSMC)
 
-LOG_GROUP_START(Nonsingular )
+LOG_GROUP_START(NTSMC)
 LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
@@ -323,4 +323,4 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
-LOG_GROUP_STOP(Nonsingular )
+LOG_GROUP_STOP(NTSMC)
