@@ -13,14 +13,14 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 100;
-static float k2_phi = 2;
+static float k1_phi = 0.35f;
+static float k2_phi = 0.25f;
 
-static float k1_theta = 100;
-static float k2_theta = 2;
+static float k1_theta = 0.35f;
+static float k2_theta = 0.25f;
 
-static float k1_psi = 95;
-static float k2_psi = 2.3;
+static float k1_psi = 0.25f;
+static float k2_psi = 0.12f;
 
 static float iephi   = 0;
 static float ietheta = 0;
@@ -35,12 +35,19 @@ static float cmd_roll;
 static float cmd_pitch;
 static float cmd_yaw;
 
+static float cmd_roll_n;
+static float cmd_pitch_n;
+static float cmd_yaw_n;
+
 
 void controllerbcReset(void)
 {
   iephi = 0;
   ietheta = 0;
   iepsi = 0;
+
+  attitudeControllerResetAllPID();
+  positionControllerResetAllPID();
 }
 
 void controllerbcInit(void)
@@ -202,6 +209,10 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
+    cmd_roll_n = tau_phi_n;
+    cmd_pitch_n = tau_theta_n;
+    cmd_yaw_n = tau_psi_n;
+
   }
 
   control->thrust = actuatorThrust;
@@ -218,8 +229,6 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    attitudeControllerResetAllPID();
-    positionControllerResetAllPID();
     controllerbcReset();
 
     // Reset the calculated YAW angle for rate control
@@ -244,4 +253,7 @@ LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
 LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
+LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
+LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
+LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
 LOG_GROUP_STOP(Backstepping)

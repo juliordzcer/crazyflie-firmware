@@ -234,7 +234,7 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
   }
 }
 
-PARAM_GROUP_START(SlidingMode)
+PARAM_GROUP_START(SlidingModes)
 PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
 PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
 
@@ -243,7 +243,6 @@ PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
 
 PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
 PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
-
 PARAM_GROUP_STOP(SlidingModes)
 
 LOG_GROUP_START(SlidingModes)
