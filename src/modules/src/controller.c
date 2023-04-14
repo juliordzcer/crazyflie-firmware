@@ -9,6 +9,7 @@
 #include "controller_bc.h"
 #include "controller_sta.h"
 #include "controller_ntsmc.h"
+#include "controller_stsmc.h"
 #include "controller_mellinger.h"
 #include "controller_indi.h"
 
@@ -36,6 +37,7 @@ static ControllerFcns controllerFunctions[] = {
   {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "Twisting"},
   {.init = controllerstaInit, .test = controllerstaTest, .update = controllersta, .name = "Super-Twisting"},
   {.init = controllerntsmcInit, .test = controllerntsmcTest, .update = controllerntsmc, .name = "Nonsingular-Terminal"},
+  {.init = controllerstsmcInit, .test = controllerstsmcTest, .update = controllerstsmc, .name = "Singular-Terminal"},
 };
 
 
@@ -66,6 +68,8 @@ void controllerInit(ControllerType controller) {
     #define CONTROLLER ControllerTypeSTA
   #elif defined(CONFIG_CONTROLLER_NTSMC)
     #define CONTROLLER ControllerTypeNTSMC
+  #elif defined(CONFIG_CONTROLLER_STSMC)
+    #define CONTROLLER ControllerTypeSTSMC
   #else
     #define CONTROLLER ControllerTypeAny
   #endif

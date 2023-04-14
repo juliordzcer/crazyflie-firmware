@@ -61,6 +61,11 @@ config CONTROLLER_NTSMC
     help
         Use the Nonsingular-Terminal controller as default
 
+config CONTROLLER_STSMC
+    bool "Singular-Terminal controller"
+    help
+        Use the Singular-Terminal controller as default
+
 endchoice
 
 config ESTIMATOR_KALMAN_ENABLE

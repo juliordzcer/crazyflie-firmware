@@ -159,13 +159,13 @@ void controllersta(control_t *control, setpoint_t *setpoint,
 
     float dt = ATTITUDE_UPDATE_DT;
 
-    float k1_phi = 1.5f*powf(zeta_phi,2.0f/3.0f);
+    float k1_phi = 1.5f*powf(zeta_phi,1.0f/2.0f);
     float k2_phi = 1.1f*zeta_phi;
 
-    float k1_theta = 1.5f*powf(zeta_theta,2.0f/3.0f);
+    float k1_theta = 1.5f*powf(zeta_theta,1.0f/2.0f);
     float k2_theta = 1.1f*zeta_theta;
 
-    float k1_psi = 1.5f*powf(zeta_psi,2.0f/3.0f);
+    float k1_psi = 1.5f*powf(zeta_psi,1.0f/2.0f);
     float k2_psi = 1.1f*zeta_psi;
 
     // Conversion de a radianes
