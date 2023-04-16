@@ -48,7 +48,18 @@ static float cmd_roll_n;
 static float cmd_pitch_n;
 static float cmd_yaw_n;
 
+void setgainssta(float new_k0_phi, float new_zeta_phi, float new_k0_theta, float new_zeta_theta, float new_k0_psi, float new_zeta_psi) {
 
+k0_phi = new_k0_phi;
+zeta_phi = new_zeta_phi; 
+
+k0_theta = new_k0_theta;
+zeta_theta = new_zeta_theta; 
+
+k0_psi = new_k0_psi;
+zeta_psi = new_zeta_psi; 
+
+}
 
 void controllerstaReset(void)
 {

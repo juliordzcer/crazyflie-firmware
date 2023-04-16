@@ -45,6 +45,17 @@ static float cmd_roll_n;
 static float cmd_pitch_n;
 static float cmd_yaw_n;
 
+void setgainstc(int new_gain, float new_zeta_phi, float new_zeta_theta, float new_zeta_psi) 
+{
+
+  zeta_phi   = new_zeta_phi;
+  zeta_theta = new_zeta_theta;
+  zeta_psi   = new_zeta_psi;
+
+  gain = new_gain;
+
+}
+
 
 
 void controllertcReset(void)

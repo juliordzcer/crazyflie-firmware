@@ -50,6 +50,15 @@ void controllerbcReset(void)
   positionControllerResetAllPID();
 }
 
+void setgainsbc(float new_k1_phi, float new_k2_phi, float new_k1_theta, float new_k2_theta, float new_k1_psi, float new_k2_psi) {
+  k1_phi = new_k1_phi;
+  k2_phi = new_k2_phi;
+  k1_theta = new_k1_theta;
+  k2_theta = new_k2_theta;
+  k1_psi = new_k1_psi;
+  k2_psi = new_k2_psi;
+}
+
 void controllerbcInit(void)
 {
   attitudeControllerInit(ATTITUDE_UPDATE_DT);

@@ -40,6 +40,16 @@ static float cmd_pitch_n;
 static float cmd_yaw_n;
 
 
+void setgainssmc(float new_k1_phi, float new_k2_phi, float new_k1_theta, float new_k2_theta, float new_k1_psi, float new_k2_psi) {
+  k1_phi = new_k1_phi;
+  k2_phi = new_k2_phi;
+  k1_theta = new_k1_theta;
+  k2_theta = new_k2_theta;
+  k1_psi = new_k1_psi;
+  k2_psi = new_k2_psi;
+}
+
+
 void controllersmcReset(void)
 {
   iephi = 0;

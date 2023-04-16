@@ -717,6 +717,12 @@ LOG_ADD_CORE(LOG_FLOAT, qz, &state.attitudeQuaternion.z)
  * @brief Attitude as a quaternion, w
  */
 LOG_ADD_CORE(LOG_FLOAT, qw, &state.attitudeQuaternion.w)
+
+/**
+ * @brief Attitude as a compressed quaternion, see see quatcompress.h for details
+ */
+LOG_ADD(LOG_UINT32, quat, &stateCompressed.quat)
+
 LOG_GROUP_STOP(stateEstimate)
 
 /**

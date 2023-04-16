@@ -42,6 +42,22 @@ static float cmd_roll_n;
 static float cmd_pitch_n;
 static float cmd_yaw_n;
 
+void setgainspidn(float new_kp_phi, float new_ki_phi, float new_kd_phi, float new_kp_theta, float new_ki_theta, float new_kd_theta, float new_kp_psi, float new_ki_psi, float new_kd_psi) 
+{
+
+  kp_phi = new_kp_phi;
+  ki_phi = new_ki_phi;
+  kd_phi = new_kd_phi;
+
+  kp_theta = new_kp_theta;
+  ki_theta = new_ki_theta;
+  kd_theta = new_kd_theta;
+
+  kp_psi = new_kp_psi;
+  ki_psi = new_ki_psi;
+  kd_psi = new_kd_psi;
+}
+
 
 void controllerpidnReset(void)
 {
