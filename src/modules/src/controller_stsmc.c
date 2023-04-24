@@ -27,6 +27,8 @@ static float zeta_theta = 0.075f;
 static float k0_psi = 0.27f;
 static float zeta_psi = 0.06f; 
 
+static float ks = 1000.0f;
+
 static float iephi = 0;
 static float ietheta = 0;
 static float iepsi = 0;
@@ -47,6 +49,10 @@ static float cmd_yaw;
 static float cmd_roll_n;
 static float cmd_pitch_n;
 static float cmd_yaw_n;
+
+static float cmd_roll_nn;
+static float cmd_pitch_nn;
+static float cmd_yaw_nn;
 
 void setgainsstsmc(float new_k0_phi, float new_zeta_phi, float new_k0_theta, float new_zeta_theta, float new_k0_psi, float new_zeta_psi) {
 
@@ -208,24 +214,31 @@ void controllerstsmc(control_t *control, setpoint_t *setpoint,
     float ethetap = thetap - thetadp;
     float epsip   = psip - psidp; 
 
+    float Jx = 16.6e-6f;
+    float Jy = 16.6e-6f;
+    float Jz = 29.3e-6f;
+
     // Control de Phi 
     float S_phi = ephip + k0_phi * powf(fabsf(ephi), 2.0f / 3.0f) * sign(ephi);
     nu_phi += (-k2_phi * sign(S_phi)) * dt;
-    float tau_phi_n = nu_phi - k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi);
+    float tau_bar_phi = nu_phi - k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi);
+    float tau_phi   = (Jx * ( tau_bar_phi - ((Jy-Jz)/Jx) * thetap * psip)) * ks;
 
     // Control de Theta
     float S_theta = ethetap + k0_theta * powf(fabsf(etheta), 2.0f / 3.0f) * sign(etheta);
     nu_theta += (-k2_theta * sign(S_theta)) * dt;
-    float tau_theta_n = -k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) + nu_theta;
+    float tau_bar_theta = -k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) + nu_theta;
+    float tau_theta = (Jy * ( tau_bar_theta - ((Jz-Jx)/Jy) * phip * psip))* ks;
 
     // Control de Psi
     float S_psi = epsip + k0_psi * powf(fabsf(epsi), 2.0f / 3.0f) * sign(epsi);
     nu_psi += (-k2_psi * sign(S_psi)) * dt;
-    float tau_psi_n = -k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + nu_psi;
+    float tau_bar_psi = -k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + nu_psi;
+    float tau_psi   = (Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip))* ks;
 
-    control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
-    control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
-    control->yaw = clamp(calculate_rpm(tau_psi_n), -32000, 32000);
+    control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
+    control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
+    control->yaw = clamp(calculate_rpm(tau_psi), -32000, 32000);
     
     control->yaw = -control->yaw;
 
@@ -234,9 +247,9 @@ void controllerstsmc(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    cmd_roll_n = tau_phi_n;
-    cmd_pitch_n = tau_theta_n;
-    cmd_yaw_n = tau_psi_n;
+    cmd_roll_n = tau_bar_phi;
+    cmd_pitch_n = tau_bar_theta;
+    cmd_yaw_n = tau_bar_psi;
 
   }
 
@@ -276,4 +289,7 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
+LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_nn)
+LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_nn)
+LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_nn)
 LOG_GROUP_STOP(STSMC)

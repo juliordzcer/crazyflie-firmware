@@ -25,6 +25,8 @@ static float kp_psi = 0.0f;
 static float ki_psi = 0.0f;
 static float kd_psi = 0.0f;
 
+static float ks = 1000.0f;
+
 static float iephi = 0.0f;
 static float ietheta = 0.0f;
 static float iepsi = 0.0f;
@@ -41,6 +43,10 @@ static float cmd_yaw;
 static float cmd_roll_n;
 static float cmd_pitch_n;
 static float cmd_yaw_n;
+
+static float cmd_roll_nn;
+static float cmd_pitch_nn;
+static float cmd_yaw_nn;
 
 void setgainspidn(float new_kp_phi, float new_ki_phi, float new_kd_phi, float new_kp_theta, float new_ki_theta, float new_kd_theta, float new_kp_psi, float new_ki_psi, float new_kd_psi) 
 {
@@ -199,19 +205,25 @@ void controllerpidn(control_t *control, setpoint_t *setpoint,
     float ethetap = thetadp - thetap;
     float epsip   = psidp - psip; 
 
+    float Jx = 16.6e-6f;
+    float Jy = 16.6e-6f;
+    float Jz = 29.3e-6f;
 
     // Controlador Phi
-    float tau_phi_n   = kp_phi * ephi + ki_phi * iephi + kd_phi * ephip;
+    float tau_bar_phi   = kp_phi * ephi + ki_phi * iephi + kd_phi * ephip;
+    float tau_phi   = (Jx * ( tau_bar_phi - ((Jy-Jz)/Jx) * thetap * psip)) * ks;
 
     // Controlador Theta
-    float tau_theta_n = kp_theta * etheta + ki_theta * ietheta + kd_theta * ethetap;
+    float tau_bar_theta = kp_theta * etheta + ki_theta * ietheta + kd_theta * ethetap;
+    float tau_theta = (Jy * ( tau_bar_theta - ((Jz-Jx)/Jy) * phip * psip))* ks;
 
     // Controlador Psi
-    float tau_psi_n   = kp_psi * epsi + ki_psi * iepsi + kd_psi * epsip;
+    float tau_bar_psi   = kp_psi * epsi + ki_psi * iepsi + kd_psi * epsip;
+    float tau_psi   = (Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip))* ks;
 
-    control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
-    control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
-    control->yaw = clamp(calculate_rpm(tau_psi_n), -32000, 32000);
+    control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
+    control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
+    control->yaw = clamp(calculate_rpm(tau_psi), -32000, 32000);
     
     control->yaw = -control->yaw;
 
@@ -220,9 +232,13 @@ void controllerpidn(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    cmd_roll_n = tau_phi_n;
-    cmd_pitch_n = tau_theta_n;
-    cmd_yaw_n = tau_psi_n;
+    cmd_roll_n = tau_bar_phi;
+    cmd_pitch_n = tau_bar_theta;
+    cmd_yaw_n = tau_bar_psi;
+
+    cmd_roll_nn = tau_phi;
+    cmd_pitch_nn = tau_theta;
+    cmd_yaw_nn = tau_psi;
 
   }
 
@@ -239,7 +255,6 @@ void controllerpidn(control_t *control, setpoint_t *setpoint,
     cmd_roll = control->roll;
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
-
 
     controllerpidnReset();
 
@@ -270,4 +285,7 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
+LOG_ADD(LOG_FLOAT, cmd_roll_nn, &cmd_roll_nn)
+LOG_ADD(LOG_FLOAT, cmd_pitch_nn, &cmd_pitch_nn)
+LOG_ADD(LOG_FLOAT, cmd_yaw_nn, &cmd_yaw_nn)
 LOG_GROUP_STOP(PIDN)

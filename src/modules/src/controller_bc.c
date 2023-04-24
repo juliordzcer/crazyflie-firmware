@@ -4,7 +4,7 @@
 #include "position_controller.h"
 #include "controller_bc.h"
 
-
+// #include "pid.h"
 #include "commander.h"
 #include "platform_defaults.h"
 #include "log.h"
@@ -13,14 +13,17 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 0.001f;
-static float k2_phi = 0.34f;
+static float k1_phi = 7.65f;
+static float k2_phi = 1.8f;
 
-static float k1_theta = 0.001f;
-static float k2_theta = 0.34f;
+static float k1_theta = 7.65f;
+static float k2_theta = 1.8f;
 
-static float k1_psi = 0.0025f;
-static float k2_psi = 0.22f;
+static float k1_psi = 6.85f;
+static float k2_psi = 2.35f;
+
+// Ganancia de escalamiento.
+static float ks = 1000.0f;
 
 static float iephi   = 0;
 static float ietheta = 0;
@@ -39,6 +42,9 @@ static float cmd_roll_n;
 static float cmd_pitch_n;
 static float cmd_yaw_n;
 
+static float cmd_roll_nn;
+static float cmd_pitch_nn;
+static float cmd_yaw_nn;
 
 void controllerbcReset(void)
 {
@@ -50,14 +56,14 @@ void controllerbcReset(void)
   positionControllerResetAllPID();
 }
 
-void setgainsbc(float new_k1_phi, float new_k2_phi, float new_k1_theta, float new_k2_theta, float new_k1_psi, float new_k2_psi) {
-  k1_phi = new_k1_phi;
-  k2_phi = new_k2_phi;
-  k1_theta = new_k1_theta;
-  k2_theta = new_k2_theta;
-  k1_psi = new_k1_psi;
-  k2_psi = new_k2_psi;
-}
+// void setgainsbc(float new_k1_phi, float new_k2_phi, float new_k1_theta, float new_k2_theta, float new_k1_psi, float new_k2_psi) {
+//   k1_phi = new_k1_phi;
+//   k2_phi = new_k2_phi;
+//   k1_theta = new_k1_theta;
+//   k2_theta = new_k2_theta;
+//   k1_psi = new_k1_psi;
+//   k2_psi = new_k2_psi;
+// }
 
 void controllerbcInit(void)
 {
@@ -151,7 +157,7 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
       rateDesired.pitch = setpoint->attitudeRate.pitch;
       attitudeControllerResetPitchAttitudePID();
     }
-
+    
     // Conversion de a radianes 
 
     float phid   = radians(attitudeDesired.roll);
@@ -170,6 +176,7 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     float thetap = radians(-sensors->gyro.y);
     float psip   = radians(sensors->gyro.z);
 
+
     // Errores de orientacion [Rad].
 
     // Error de orientacion.
@@ -182,24 +189,31 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     float ethetap = thetadp - thetap;
     float epsip   = psidp - psip; 
 
+    float Jx=16.6e-6f;
+    float Jy=16.6e-6f;
+    float Jz=29.3e-6f;
+
     // Control de Phi
     float nu_phi = phidp + k1_phi * ephi;
     float ephi2 = nu_phi - phip;
-    float tau_phi_n = ephi + k1_phi * ephip + k2_phi * ephi2;
+    float tau_bar_phi = ephi + k1_phi * ephip + k2_phi * ephi2;
+    float tau_phi   = (Jx * ( tau_bar_phi - ((Jy-Jz)/Jx) * thetap * psip)) * ks;
 
     // Control de Theta
     float nu_theta = k1_theta * etheta + thetadp;
     float etheta2 = nu_theta - thetap;
-    float tau_theta_n = etheta + k1_theta * ethetap + k2_theta * etheta2;
+    float tau_bar_theta = etheta + k1_theta * ethetap + k2_theta * etheta2;
+    float tau_theta = (Jy * ( tau_bar_theta - ((Jz-Jx)/Jy) * phip * psip))* ks;
 
     // Control de Psi
     float nu_psi = k1_psi * epsi + psidp;
     float epsi2 = nu_psi - psip;
-    float tau_psi_n = epsi + k1_psi * epsip + k2_psi * epsi2;
+    float tau_bar_psi = epsi + k1_psi * epsip + k2_psi * epsi2;
+    float tau_psi   = (Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip))* ks;
 
-    control->roll = clamp(calculate_rpm(tau_phi_n), -32000, 32000);
-    control->pitch = clamp(calculate_rpm(tau_theta_n), -32000, 32000);
-    control->yaw = clamp(calculate_rpm(tau_psi_n), -32000, 32000);
+    control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
+    control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
+    control->yaw = clamp(calculate_rpm(tau_psi), -32000, 32000);
     
     control->yaw = -control->yaw;
 
@@ -208,9 +222,13 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    cmd_roll_n = tau_phi_n;
-    cmd_pitch_n = tau_theta_n;
-    cmd_yaw_n = tau_psi_n;
+    cmd_roll_n = tau_bar_phi;
+    cmd_pitch_n = tau_bar_theta;
+    cmd_yaw_n = tau_bar_psi;
+
+    cmd_roll_nn = tau_phi;
+    cmd_pitch_nn = tau_theta;
+    cmd_yaw_nn = tau_psi;
 
   }
 
@@ -245,6 +263,8 @@ PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
 PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
 PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
 
+PARAM_ADD(PARAM_FLOAT, ks, &ks)
+
 PARAM_GROUP_STOP(Backstepping)
 
 LOG_GROUP_START(Backstepping)
@@ -255,4 +275,7 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
+LOG_ADD(LOG_FLOAT, cmd_roll_nn, &cmd_roll_nn)
+LOG_ADD(LOG_FLOAT, cmd_pitch_nn, &cmd_pitch_nn)
+LOG_ADD(LOG_FLOAT, cmd_yaw_nn, &cmd_yaw_nn)
 LOG_GROUP_STOP(Backstepping)
