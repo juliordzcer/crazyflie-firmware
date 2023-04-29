@@ -4,6 +4,7 @@
 #include "cfassert.h"
 #include "controller.h"
 #include "controller_pid.h"
+#include "controller_pidn.h"
 #include "controller_tc.h"
 #include "controller_smc.h"
 #include "controller_bc.h"
@@ -15,7 +16,7 @@
 
 #include "autoconf.h"
 
-#define DEFAULT_CONTROLLER ControllerTypeSTSMC
+#define DEFAULT_CONTROLLER ControllerTypePIDN
 static ControllerType currentController = ControllerTypeAny;
 
 static void initController();
@@ -38,6 +39,7 @@ static ControllerFcns controllerFunctions[] = {
   {.init = controllerstaInit, .test = controllerstaTest, .update = controllersta, .name = "Super-Twisting"},
   {.init = controllerntsmcInit, .test = controllerntsmcTest, .update = controllerntsmc, .name = "Nonsingular-Terminal"},
   {.init = controllerstsmcInit, .test = controllerstsmcTest, .update = controllerstsmc, .name = "Singular-Terminal"},
+  {.init = controllerpidnInit, .test = controllerpidnTest, .update = controllerpidn, .name = "PIDN"},
 };
 
 
@@ -70,6 +72,8 @@ void controllerInit(ControllerType controller) {
     #define CONTROLLER ControllerTypeNTSMC
   #elif defined(CONFIG_CONTROLLER_STSMC)
     #define CONTROLLER ControllerTypeSTSMC
+  #elif defined(CONFIG_CONTROLLER_PIDN)
+    #define CONTROLLER ControllerTypePIDN
   #else
     #define CONTROLLER ControllerTypeAny
   #endif

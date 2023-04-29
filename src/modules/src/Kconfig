@@ -66,6 +66,11 @@ config CONTROLLER_STSMC
     help
         Use the Singular-Terminal controller as default
 
+config CONTROLLER_PIDN
+    bool "PIDN controller"
+    help
+        Use the PID (proportional–integral–derivative) in newtons controller as default
+
 endchoice
 
 config ESTIMATOR_KALMAN_ENABLE

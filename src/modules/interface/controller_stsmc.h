@@ -8,3 +8,4 @@ void controllerstsmc(control_t *control, setpoint_t *setpoint,
                                          const uint32_t tick);
 
 
+void setgainsstsmc(float new_k0_phi, float new_zeta_phi, float new_k0_theta, float new_zeta_theta, float new_k0_psi, float new_zeta_psi);

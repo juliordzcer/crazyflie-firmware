@@ -8,3 +8,4 @@ void controllertc(control_t *control, setpoint_t *setpoint,
                                          const uint32_t tick);
 
 
+void setgainstc(int new_gain, float new_zeta_phi, float new_zeta_theta, float new_zeta_psi);
