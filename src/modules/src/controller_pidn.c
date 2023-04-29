@@ -13,17 +13,17 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float kp_phi = 0.0f;
-static float ki_phi = 0.0f;
-static float kd_phi = 0.0f;
+static float kp_phi = 30.0f;
+static float ki_phi = 7.0f;
+static float kd_phi = 10.0f;
 
-static float kp_theta = 0.0f;
-static float ki_theta = 0.0f;
-static float kd_theta = 0.0f;
+static float kp_theta = 30.0f;
+static float ki_theta = 7.0f;
+static float kd_theta = 10.0f;
 
-static float kp_psi = 0.0f;
-static float ki_psi = 0.0f;
-static float kd_psi = 0.0f;
+static float kp_psi = 15.0f;
+static float ki_psi = 1.0f;
+static float kd_psi = 10.0f;
 
 static float ks = 1000.0f;
 
@@ -40,13 +40,9 @@ static float cmd_roll;
 static float cmd_pitch;
 static float cmd_yaw;
 
-static float cmd_roll_n;
-static float cmd_pitch_n;
-static float cmd_yaw_n;
-
-static float cmd_roll_nn;
-static float cmd_pitch_nn;
-static float cmd_yaw_nn;
+static float cmd_roll_nm;
+static float cmd_pitch_nm;
+static float cmd_yaw_nm;
 
 void setgainspidn(float new_kp_phi, float new_ki_phi, float new_kd_phi, float new_kp_theta, float new_ki_theta, float new_kd_theta, float new_kp_psi, float new_ki_psi, float new_kd_psi) 
 {
@@ -198,7 +194,7 @@ void controllerpidn(control_t *control, setpoint_t *setpoint,
     ietheta = ietheta + etheta * dt;
     ietheta = clamp(ietheta, -1,1);
     iepsi   = iepsi + epsi * dt;
-    iepsi = clamp(iepsi, -1500,1500);
+    iepsi = clamp(iepsi, -1.5,1.5);
     
     // Error de velocidad angular
     float ephip   = phidp - phip;
@@ -232,13 +228,9 @@ void controllerpidn(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    cmd_roll_n = tau_bar_phi;
-    cmd_pitch_n = tau_bar_theta;
-    cmd_yaw_n = tau_bar_psi;
-
-    cmd_roll_nn = tau_phi;
-    cmd_pitch_nn = tau_theta;
-    cmd_yaw_nn = tau_psi;
+    cmd_roll_nm  = tau_phi;
+    cmd_pitch_nm = tau_theta;
+    cmd_yaw_nm   = tau_psi;
 
   }
 
@@ -282,10 +274,7 @@ LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
 LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
-LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
-LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
-LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
-LOG_ADD(LOG_FLOAT, cmd_roll_nn, &cmd_roll_nn)
-LOG_ADD(LOG_FLOAT, cmd_pitch_nn, &cmd_pitch_nn)
-LOG_ADD(LOG_FLOAT, cmd_yaw_nn, &cmd_yaw_nn)
+LOG_ADD(LOG_FLOAT, cmd_roll_nm, &cmd_roll_nm)
+LOG_ADD(LOG_FLOAT, cmd_pitch_nm, &cmd_pitch_nm)
+LOG_ADD(LOG_FLOAT, cmd_yaw_nm, &cmd_yaw_nm)
 LOG_GROUP_STOP(PIDN)
