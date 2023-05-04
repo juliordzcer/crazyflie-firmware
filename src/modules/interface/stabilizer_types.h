@@ -35,6 +35,19 @@
  * All have a timestamp to be set when the data is calculated.
  */
 
+
+/** Leader info form */
+typedef struct leader_s {
+  uint32_t timestamp;  // Timestamp when the data was computed
+
+  float thrust;
+  float roll;
+  float pitch;
+  float yaw;
+
+} leader_t;
+
+
 /** Attitude in euler angle form */
 typedef struct attitude_s {
   uint32_t timestamp;  // Timestamp when the data was computed
@@ -187,8 +200,11 @@ typedef enum mode_e {
   modeVelocity
 } stab_mode_t;
 
-typedef struct setpoint_s {
+typedef struct setpoint_s 
+{
   uint32_t timestamp;
+
+  leader_t leader;  // Informacion del lider para metodologia lider seguidor. (Roll, Pitch, Yaw, Thrust)
 
   attitude_t attitude;      // deg
   attitude_t attitudeRate;  // deg/s

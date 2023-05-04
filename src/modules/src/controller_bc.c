@@ -211,16 +211,16 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     float tau_bar_psi = epsi + k1_psi * epsip + k2_psi * epsi2;
     float tau_psi   = (Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip))* ks;
 
-    control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
-    control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
-    control->yaw = clamp(calculate_rpm(tau_psi), -32000, 32000);
+    control->roll  = clamp(calculate_rpm(tau_phi)   , -32000, 32000);
+    control->pitch = clamp(calculate_rpm(tau_theta) , -32000, 32000);
+    control->yaw   = clamp(calculate_rpm(tau_psi)   , -32000, 32000);
     
     control->yaw = -control->yaw;
 
     cmd_thrust = control->thrust;
-    cmd_roll = control->roll;
-    cmd_pitch = control->pitch;
-    cmd_yaw = control->yaw;
+    cmd_roll   = control->roll;
+    cmd_pitch  = control->pitch;
+    cmd_yaw    = control->yaw;
 
     cmd_roll_n = tau_bar_phi;
     cmd_pitch_n = tau_bar_theta;
