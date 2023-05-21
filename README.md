@@ -14,10 +14,10 @@ This project contains the source code for the firmware used in the Crazyflie ran
 ### Requirements
 To be able to execute the programs it is necessary to install the following dependencies, executing the following commands in the console
 ```
-sudo apt-get update
-sudo apt install python3-pip
-sudo apt-get install make gcc-arm-none-eabi
-sudo apt install git
+sudo apt-get update 
+sudo apt install python3-pip -y
+sudo apt-get install make gcc-arm-none-eabi -y
+sudo apt install git -y
 ```
 ### Cloning
 This repository uses git submodules. Clone with the `--recursive` flag
