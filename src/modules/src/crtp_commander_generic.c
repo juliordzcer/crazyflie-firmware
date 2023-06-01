@@ -71,7 +71,6 @@ enum packet_type {
   hoverType         = 5,
   fullStateType     = 6,
   positionType      = 7,
-  followerType      = 8,
 };
 
 /* ---===== 2 - Decoding functions =====--- */
@@ -399,47 +398,6 @@ static void positionDecoder(setpoint_t *setpoint, uint8_t type, const void *data
   setpoint->attitude.yaw = values->yaw;
 }
 
-
-// Invento de informacion del seguidor.
-/* followerDecoder 
- * Set the absolute postition and orientation
- */
- struct followerPacket_s {
-   float x;       // Position in m
-   float y;
-   float z;
-   float yaw;     // Orientation in degree
-   float u_l;     // Thrust in Newton
-   float roll_l;  // Orientation Roll Leader in degree   
-   float pitch_l; // Orientation Pitch Leader in degree 
-   float yaw_l;   // Orientation Yaw Leader in degree 
- } __attribute__((packed));
-static void followerDecoder(setpoint_t *setpoint, uint8_t type, const void *data, size_t datalen)
-{
-  const struct followerPacket_s *values = data;
-
-  setpoint->mode.x = modeAbs;
-  setpoint->mode.y = modeAbs;
-  setpoint->mode.z = modeAbs;
-
-  setpoint->position.x = values->x;
-  setpoint->position.y = values->y;
-  setpoint->position.z = values->z;
-
-
-  setpoint->mode.yaw = modeAbs;
-  setpoint->attitude.yaw = values->yaw;
-
-  setpoint->leader.thrust = values -> u_l;
-  setpoint->leader.roll   = values -> roll_l;
-  setpoint->leader.pitch  = values -> pitch_l;
-  setpoint->leader.yaw    = values -> yaw_l;
-
-}
-
-
-
-
  /* ---===== 3 - packetDecoders array =====--- */
 const static packetDecoder_t packetDecoders[] = {
   [stopType]          = stopDecoder,
@@ -450,7 +408,6 @@ const static packetDecoder_t packetDecoders[] = {
   [hoverType]         = hoverDecoder,
   [fullStateType]     = fullStateDecoder,
   [positionType]      = positionDecoder,
-  [followerType]      = followerDecoder,
 };
 
 /* Decoder switch */

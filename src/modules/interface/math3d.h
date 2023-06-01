@@ -39,13 +39,6 @@ SOFTWARE.
 #define M_PI_2_F (1.57079632679f)
 #endif
 
-
-// ----------------------------- scalars --------------------------------
-
-static inline float fsqr(float x) { return x * x; }
-static inline float radians(float degrees) { return (M_PI_F / 180.0f) * degrees; }
-static inline float degrees(float radians) { return (180.0f / M_PI_F) * radians; }
-
 static inline float sign(float n){
     if(n > 0)
         return 1.0;
@@ -54,22 +47,6 @@ static inline float sign(float n){
     else
         return 0.0;
 }
-
-
-// static inline float calculate_rpm(float u) {
-//   // Comprobar la validez de la entrada
-//   if (isnan(u)) {
-//     return 0.0f;
-//   }
-  
-//   // Calcular la fuerza de empuje en gramos
-//   float thrust_gram = (float)fabs(u) * (float)(1.0f / 9.81f);
-
-//   // Calcular las RPM
-//   float rpm = sign(u) * (sqrtf(4.0f * 0.109e-6f * (thrust_gram - 0.154f) + powf(-210.6e-6f, 2)) - -210.6e-6f) / (2.0f * 0.109e-6f);
-
-//   return rpm;
-// }
 
 static inline float calculate_rpm(float  thrust_newtons) {
 
@@ -82,7 +59,11 @@ static inline float calculate_rpm(float  thrust_newtons) {
     return (-b + sqrtf(discriminante)) / (2.0f * a) * sign(thrust_gramos);
 }
 
+// ----------------------------- scalars --------------------------------
 
+static inline float fsqr(float x) { return x * x; }
+static inline float radians(float degrees) { return (M_PI_F / 180.0f) * degrees; }
+static inline float degrees(float radians) { return (180.0f / M_PI_F) * radians; }
 
 // Normalize radians to be in range [-pi,pi]
 // See https://stackoverflow.com/questions/4633177/c-how-to-wrap-a-float-to-the-interval-pi-pi

@@ -36,6 +36,11 @@ config CONTROLLER_MELLINGER
     help
         Use the Mellinger controller as default
 
+config CONTROLLER_BRESCIANINI
+    bool "Brescianini controller"
+    help
+        Use the Brescianini controller as default
+
 config CONTROLLER_SMC
     bool "Sliding Mode controller"
     help
@@ -70,6 +75,7 @@ config CONTROLLER_PIDN
     bool "PIDN controller"
     help
         Use the PID (proportional–integral–derivative) in newtons controller as default
+
 
 endchoice
 
@@ -196,6 +202,15 @@ config POWER_DISTRIBUTION_FLAPPER_REVB
     default n
     help
         Power distribution function for Flapper Nimble+ with revB PCB
+
+config ENABLE_THRUST_BAT_COMPENSATED
+    bool "Enable battery thrust compensation"
+    default y
+    help
+        Compensate thrust depending on battery voltage so it will produce about the same
+        amount of thrust independent of the battery voltage.
+        The compensation is based on thrust measurements, which are only valid for CF2.X stock configuration.
+        Not applied for brushless motor setup.
 
 endmenu
 

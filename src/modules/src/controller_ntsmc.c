@@ -13,15 +13,23 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-// Ganancias TC
 
-static float zeta_phi   = 0.000261;  //0.00165f;
-static float zeta_theta = 0.000261;  //0.00165f;
-static float zeta_psi   = 0.00028;  //0.0018f;
+// static float zeta_phi   = 0.000261;  //0.00165f;
+// static float zeta_theta = 0.000261;  //0.00165f;
+// static float zeta_psi   = 0.00028;  //0.0018f;
 
-static int gain = 2;
+// static int gain = 2;
 
-static float ks = 1000.0f;
+static float k0_phi = 45.0f; 
+static float k1_phi = 365.8f;
+static float k2_phi = 1320.50f;
+
+static float k0_psi = 25.0f;
+static float k1_psi = 300.0f;
+static float k2_psi = 1200.0f;
+
+
+static float ks = 10.0f;
 
 static float iephi = 0;
 static float ietheta = 0;
@@ -43,21 +51,6 @@ static float cmd_yaw;
 static float cmd_roll_n;
 static float cmd_pitch_n;
 static float cmd_yaw_n;
-
-static float cmd_roll_nn;
-static float cmd_pitch_nn;
-static float cmd_yaw_nn;
-
-
-void setgainsntsmc(int new_gain, float new_zeta_phi, float new_zeta_theta, float new_zeta_psi) 
-{
-zeta_phi   = new_zeta_phi;
-zeta_theta = new_zeta_theta;
-zeta_psi   = new_zeta_psi;
-
-gain = new_gain;
-}
-
 
 void controllerntsmcReset(void)
 {
@@ -101,11 +94,13 @@ static float capAngle(float angle) {
   return result;
 }
 
-void controllerntsmc(control_t *control, setpoint_t *setpoint,
+void controllerntsmc(control_t *control, const setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
 {
+  control->controlMode = controlModeLegacy;
+
   if (RATE_DO_EXECUTE(ATTITUDE_RATE, tick)) {
     // Rate-controled YAW is moving YAW angle setpoint
     if (setpoint->mode.yaw == modeVelocity) {
@@ -167,95 +162,98 @@ void controllerntsmc(control_t *control, setpoint_t *setpoint,
     }
 
     float dt = ATTITUDE_UPDATE_DT;
+      
+    float k0_theta = k0_phi;
+    float k1_theta = k1_phi;
+    float k2_theta = k2_phi;
+  //   float k0_phi, k1_phi, k2_phi;
+  //   float k0_theta, k1_theta, k2_theta;
+  //   float k0_psi, k1_psi, k2_psi;
     
-    float k0_phi, k1_phi, k2_phi;
-    float k0_theta, k1_theta, k2_theta;
-    float k0_psi, k1_psi, k2_psi;
-    
-     switch(gain) {
-      case 1:
-        k0_phi = 20.0f*powf(zeta_phi,-1.0f/2.0f);
-        k1_phi = 4.4f*powf(zeta_phi,2.0f/3.0f);
-        k2_phi = 2.5f*zeta_phi;
+  //    switch(gain) {
+  //     case 1:
+  //       k0_phi = 20.0f*powf(zeta_phi,-1.0f/2.0f);
+  //       k1_phi = 4.4f*powf(zeta_phi,2.0f/3.0f);
+  //       k2_phi = 2.5f*zeta_phi;
 
-        k0_theta = 20.0f*powf(zeta_theta,-1.0f/2.0f);
-        k1_theta = 4.4f*powf(zeta_theta,2.0f/3.0f);
-        k2_theta = 2.5f*zeta_theta;
+  //       k0_theta = 20.0f*powf(zeta_theta,-1.0f/2.0f);
+  //       k1_theta = 4.4f*powf(zeta_theta,2.0f/3.0f);
+  //       k2_theta = 2.5f*zeta_theta;
 
-        k0_psi = 20.0f*powf(zeta_psi,-1.0f/2.0f);
-        k1_psi = 4.4f*powf(zeta_psi,2.0f/3.0f);
-        k2_psi = 2.5f*zeta_psi;
-        break;
-      case 2:
-        k0_phi = 28.7f*powf(zeta_phi,-1.0f/2.0f);
-        k1_phi = 4.5f*powf(zeta_phi,2.0f/3.0f);
-        k2_phi = 2.0f*zeta_phi;
+  //       k0_psi = 20.0f*powf(zeta_psi,-1.0f/2.0f);
+  //       k1_psi = 4.4f*powf(zeta_psi,2.0f/3.0f);
+  //       k2_psi = 2.5f*zeta_psi;
+  //       break;
+  //     case 2:
+  //       k0_phi = 28.7f*powf(zeta_phi,-1.0f/2.0f);
+  //       k1_phi = 4.5f*powf(zeta_phi,2.0f/3.0f);
+  //       k2_phi = 2.0f*zeta_phi;
 
-        k0_theta = 28.7f*powf(zeta_theta,-1.0f/2.0f);
-        k1_theta = 4.5f*powf(zeta_theta,2.0f/3.0f);
-        k2_theta = 2.0f*zeta_theta;
+  //       k0_theta = 28.7f*powf(zeta_theta,-1.0f/2.0f);
+  //       k1_theta = 4.5f*powf(zeta_theta,2.0f/3.0f);
+  //       k2_theta = 2.0f*zeta_theta;
 
-        k0_psi = 28.7f*powf(zeta_psi,-1.0f/2.0f);
-        k1_psi = 4.5f*powf(zeta_psi,2.0f/3.0f);
-        k2_psi = 2.0f*zeta_psi;
-        break;
-      case 3:
-        k0_phi = 7.7f*powf(zeta_phi,-1.0f/2.0f);
-        k1_phi = 7.5f*powf(zeta_phi,2.0f/3.0f);
-        k2_phi = 2.0f*zeta_phi;
+  //       k0_psi = 28.7f*powf(zeta_psi,-1.0f/2.0f);
+  //       k1_psi = 4.5f*powf(zeta_psi,2.0f/3.0f);
+  //       k2_psi = 2.0f*zeta_psi;
+  //       break;
+  //     case 3:
+  //       k0_phi = 7.7f*powf(zeta_phi,-1.0f/2.0f);
+  //       k1_phi = 7.5f*powf(zeta_phi,2.0f/3.0f);
+  //       k2_phi = 2.0f*zeta_phi;
 
-        k0_theta = 7.7f*powf(zeta_theta,-1.0f/2.0f);
-        k1_theta = 7.5f*powf(zeta_theta,2.0f/3.0f);
-        k2_theta = 2.0f*zeta_theta;
+  //       k0_theta = 7.7f*powf(zeta_theta,-1.0f/2.0f);
+  //       k1_theta = 7.5f*powf(zeta_theta,2.0f/3.0f);
+  //       k2_theta = 2.0f*zeta_theta;
 
-        k0_psi = 7.7f*powf(zeta_psi,-1.0f/2.0f);
-        k1_psi = 7.5f*powf(zeta_psi,2.0f/3.0f);
-        k2_psi = 2.0f*zeta_psi;
-        break;
-      case 4:
-        k0_phi = 1.0f*powf(zeta_phi,-1.0f/2.0f);
-        k1_phi = 16.0f*powf(zeta_phi,2.0f/3.0f);
-        k2_phi = 7.0f*zeta_phi;
+  //       k0_psi = 7.7f*powf(zeta_psi,-1.0f/2.0f);
+  //       k1_psi = 7.5f*powf(zeta_psi,2.0f/3.0f);
+  //       k2_psi = 2.0f*zeta_psi;
+  //       break;
+  //     case 4:
+  //       k0_phi = 1.0f*powf(zeta_phi,-1.0f/2.0f);
+  //       k1_phi = 16.0f*powf(zeta_phi,2.0f/3.0f);
+  //       k2_phi = 7.0f*zeta_phi;
 
-        k0_theta = 1.0f*powf(zeta_theta,-1.0f/2.0f);
-        k1_theta = 16.0f*powf(zeta_theta,2.0f/3.0f);
-        k2_theta = 7.0f*zeta_theta;
+  //       k0_theta = 1.0f*powf(zeta_theta,-1.0f/2.0f);
+  //       k1_theta = 16.0f*powf(zeta_theta,2.0f/3.0f);
+  //       k2_theta = 7.0f*zeta_theta;
 
-        k0_psi = 1.0f*powf(zeta_psi,-1.0f/2.0f);
-        k1_psi = 16.0f*powf(zeta_psi,2.0f/3.0f);
-        k2_psi = 7.0f*zeta_psi;
-        break;
-      default:
-        k0_phi = 0.0f;
-        k1_phi = 0.0f;
-        k2_phi = 0.0f;
+  //       k0_psi = 1.0f*powf(zeta_psi,-1.0f/2.0f);
+  //       k1_psi = 16.0f*powf(zeta_psi,2.0f/3.0f);
+  //       k2_psi = 7.0f*zeta_psi;
+  //       break;
+  //     default:
+  //       k0_phi = 0.0f;
+  //       k1_phi = 0.0f;
+  //       k2_phi = 0.0f;
 
-        k0_theta = 0.0f;
-        k1_theta = 0.0f;
-        k2_theta = 0.0f;
+  //       k0_theta = 0.0f;
+  //       k1_theta = 0.0f;
+  //       k2_theta = 0.0f;
 
-        k0_psi = 0.0f;
-        k1_psi = 0.0f;
-        k2_psi = 0.0f;
-        break;
-   }
+  //       k0_psi = 0.0f;
+  //       k1_psi = 0.0f;
+  //       k2_psi = 0.0f;
+  //       break;
+  //  }
 
     // Conversion de a radianes
-    float phid   = radians(attitudeDesired.roll);
-    float thetad = radians(attitudeDesired.pitch);
-    float psid   = radians(attitudeDesired.yaw);
+    float phid    = radians(attitudeDesired.roll);
+    float thetad  = radians(attitudeDesired.pitch);
+    float psid    = radians(attitudeDesired.yaw);
 
     float phidp   = radians(rateDesired.roll);
     float thetadp = radians(rateDesired.pitch);
     float psidp   = radians(rateDesired.yaw);
 
-    float phi   = radians(state->attitude.roll);
-    float theta = radians(state->attitude.pitch);
-    float psi   = radians(state->attitude.yaw);
+    float phi     = radians(state->attitude.roll);
+    float theta   = radians(state->attitude.pitch);
+    float psi     = radians(state->attitude.yaw);
 
-    float phip   = radians(sensors->gyro.x);
-    float thetap = radians(-sensors->gyro.y);
-    float psip   = radians(sensors->gyro.z);
+    float phip    =  radians(sensors->gyro.x);
+    float thetap  = -radians(sensors->gyro.y);
+    float psip    =  radians(sensors->gyro.z);
 
     // Errores de orientacion [Rad].
 
@@ -302,9 +300,9 @@ void controllerntsmc(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    cmd_roll_n = tau_bar_phi;
-    cmd_pitch_n = tau_bar_theta;
-    cmd_yaw_n = tau_bar_psi;
+    cmd_roll_n = tau_phi;
+    cmd_pitch_n = tau_theta;
+    cmd_yaw_n = tau_psi;
 
   }
 
@@ -331,10 +329,21 @@ void controllerntsmc(control_t *control, setpoint_t *setpoint,
 }
 
 PARAM_GROUP_START(NTSMC)
-PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
-PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
-PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
-PARAM_ADD_CORE(PARAM_UINT8, gain, &gain)
+// PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
+// PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
+// PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
+// PARAM_ADD_CORE(PARAM_UINT8, gain, &gain)
+
+PARAM_ADD(PARAM_FLOAT, k0_phi, &k0_phi)
+PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
+PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
+
+PARAM_ADD(PARAM_FLOAT, k0_psi, &k0_psi)
+PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
+PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
+
+PARAM_ADD(PARAM_FLOAT, ks, &ks)
+
 PARAM_GROUP_STOP(NTSMC)
 
 LOG_GROUP_START(NTSMC)
@@ -345,7 +354,4 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
-LOG_ADD(LOG_FLOAT, cmd_roll_nn, &cmd_roll_nn)
-LOG_ADD(LOG_FLOAT, cmd_pitch_nn, &cmd_pitch_nn)
-LOG_ADD(LOG_FLOAT, cmd_yaw_nn, &cmd_yaw_nn)
 LOG_GROUP_STOP(NTSMC)
