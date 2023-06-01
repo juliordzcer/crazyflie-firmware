@@ -13,17 +13,17 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float kp_phi = 30.0f;
-static float ki_phi = 7.0f;
-static float kd_phi = 10.0f;
+static float kp_phi = 8.0f;
+static float ki_phi = 2.0f;
+static float kd_phi = 8.0f;
 
-static float kp_theta = 30.0f;
-static float ki_theta = 7.0f;
-static float kd_theta = 10.0f;
+static float kp_theta = 8.0f;
+static float ki_theta = 2.0f;
+static float kd_theta = 8.0f;
 
-static float kp_psi = 15.0f;
+static float kp_psi = 4.0f;
 static float ki_psi = 1.0f;
-static float kd_psi = 10.0f;
+static float kd_psi = 12.0f;
 
 static float ks = 1000.0f;
 
@@ -40,25 +40,9 @@ static float cmd_roll;
 static float cmd_pitch;
 static float cmd_yaw;
 
-static float cmd_roll_nm;
-static float cmd_pitch_nm;
-static float cmd_yaw_nm;
-
-void setgainspidn(float new_kp_phi, float new_ki_phi, float new_kd_phi, float new_kp_theta, float new_ki_theta, float new_kd_theta, float new_kp_psi, float new_ki_psi, float new_kd_psi) 
-{
-
-  kp_phi = new_kp_phi;
-  ki_phi = new_ki_phi;
-  kd_phi = new_kd_phi;
-
-  kp_theta = new_kp_theta;
-  ki_theta = new_ki_theta;
-  kd_theta = new_kd_theta;
-
-  kp_psi = new_kp_psi;
-  ki_psi = new_ki_psi;
-  kd_psi = new_kd_psi;
-}
+static float cmd_roll_n;
+static float cmd_pitch_n;
+static float cmd_yaw_n;
 
 
 void controllerpidnReset(void)
@@ -99,11 +83,13 @@ static float capAngle(float angle) {
   return result;
 }
 
-void controllerpidn(control_t *control, setpoint_t *setpoint,
+void controllerpidn(control_t *control, const setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
 {
+  control->controlMode = controlModeLegacy;
+
   if (RATE_DO_EXECUTE(ATTITUDE_RATE, tick)) {
     // Rate-controled YAW is moving YAW angle setpoint
     if (setpoint->mode.yaw == modeVelocity) {
@@ -228,9 +214,9 @@ void controllerpidn(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    cmd_roll_nm  = tau_phi;
-    cmd_pitch_nm = tau_theta;
-    cmd_yaw_nm   = tau_psi;
+    cmd_roll_n  = tau_phi;
+    cmd_pitch_n = tau_theta;
+    cmd_yaw_n   = tau_psi;
 
   }
 
@@ -274,7 +260,7 @@ LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
 LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
-LOG_ADD(LOG_FLOAT, cmd_roll_nm, &cmd_roll_nm)
-LOG_ADD(LOG_FLOAT, cmd_pitch_nm, &cmd_pitch_nm)
-LOG_ADD(LOG_FLOAT, cmd_yaw_nm, &cmd_yaw_nm)
+LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
+LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
+LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
 LOG_GROUP_STOP(PIDN)

@@ -4,6 +4,10 @@
 #include "cfassert.h"
 #include "controller.h"
 #include "controller_pid.h"
+#include "controller_mellinger.h"
+#include "controller_indi.h"
+#include "controller_brescianini.h"
+
 #include "controller_pidn.h"
 #include "controller_tc.h"
 #include "controller_smc.h"
@@ -11,8 +15,7 @@
 #include "controller_sta.h"
 #include "controller_ntsmc.h"
 #include "controller_stsmc.h"
-#include "controller_mellinger.h"
-#include "controller_indi.h"
+
 
 #include "autoconf.h"
 
@@ -24,7 +27,7 @@ static void initController();
 typedef struct {
   void (*init)(void);
   bool (*test)(void);
-  void (*update)(control_t *control, setpoint_t *setpoint, const sensorData_t *sensors, const state_t *state, const uint32_t tick);
+  void (*update)(control_t *control, const setpoint_t *setpoint, const sensorData_t *sensors, const state_t *state, const uint32_t tick);
   const char* name;
 } ControllerFcns;
 
@@ -33,6 +36,7 @@ static ControllerFcns controllerFunctions[] = {
   {.init = controllerPidInit, .test = controllerPidTest, .update = controllerPid, .name = "PID"},
   {.init = controllerMellingerInit, .test = controllerMellingerTest, .update = controllerMellinger, .name = "Mellinger"},
   {.init = controllerINDIInit, .test = controllerINDITest, .update = controllerINDI, .name = "INDI"},
+  {.init = controllerBrescianiniInit, .test = controllerBrescianiniTest, .update = controllerBrescianini, .name = "Brescianini"},
   {.init = controllersmcInit, .test = controllersmcTest, .update = controllersmc, .name = "Sliding Mode"},
   {.init = controllerbcInit, .test = controllerbcTest, .update = controllerbc, .name = "Backstepping"},
   {.init = controllertcInit, .test = controllertcTest, .update = controllertc, .name = "Twisting"},
@@ -60,6 +64,8 @@ void controllerInit(ControllerType controller) {
     #define CONTROLLER ControllerTypeINDI
   #elif defined(CONFIG_CONTROLLER_MELLINGER)
     #define CONTROLLER ControllerTypeMellinger
+  #elif defined(CONFIG_CONTROLLER_BRESCIANINI)
+    #define CONTROLLER ControllerTypeBrescianini
   #elif defined(CONFIG_CONTROLLER_SMC)
     #define CONTROLLER ControllerTypeSMC
   #elif defined(CONFIG_CONTROLLER_BC)
@@ -89,7 +95,7 @@ void controllerInit(ControllerType controller) {
   DEBUG_PRINT("Using %s (%d) controller\n", controllerGetName(), currentController);
 }
 
-ControllerType getControllerType(void) {
+ControllerType controllerGetType(void) {
   return currentController;
 }
 
@@ -101,7 +107,7 @@ bool controllerTest(void) {
   return controllerFunctions[currentController].test();
 }
 
-void controller(control_t *control, setpoint_t *setpoint, const sensorData_t *sensors, const state_t *state, const uint32_t tick) {
+void controller(control_t *control, const setpoint_t *setpoint, const sensorData_t *sensors, const state_t *state, const uint32_t tick) {
   controllerFunctions[currentController].update(control, setpoint, sensors, state, tick);
 }
 

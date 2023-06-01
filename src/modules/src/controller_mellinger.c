@@ -42,10 +42,9 @@ We added the following:
 #include "math3d.h"
 #include "position_controller.h"
 #include "controller_mellinger.h"
+#include "physicalConstants.h"
 
-#define GRAVITY_MAGNITUDE (9.81f)
-
-static float g_vehicleMass = 0.032; // TODO: should be CF global for other modules
+static float g_vehicleMass = CF_MASS;
 static float massThrust = 132000;
 
 // XY Position PID
@@ -122,7 +121,7 @@ bool controllerMellingerTest(void)
   return true;
 }
 
-void controllerMellinger(control_t *control, setpoint_t *setpoint,
+void controllerMellinger(control_t *control, const setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
@@ -138,6 +137,8 @@ void controllerMellinger(control_t *control, setpoint_t *setpoint,
   struct vec eR, ew, M;
   float dt;
   float desiredYaw = 0; //deg
+
+  control->controlMode = controlModeLegacy;
 
   if (!RATE_DO_EXECUTE(ATTITUDE_RATE, tick)) {
     return;
@@ -322,28 +323,93 @@ void controllerMellinger(control_t *control, setpoint_t *setpoint,
   }
 }
 
+
+/**
+ * Tunning variables for the full state Mellinger Controller
+ */
 PARAM_GROUP_START(ctrlMel)
-PARAM_ADD(PARAM_FLOAT, kp_xy, &kp_xy)
-PARAM_ADD(PARAM_FLOAT, kd_xy, &kd_xy)
-PARAM_ADD(PARAM_FLOAT, ki_xy, &ki_xy)
-PARAM_ADD(PARAM_FLOAT, i_range_xy, &i_range_xy)
-PARAM_ADD(PARAM_FLOAT, kp_z, &kp_z)
-PARAM_ADD(PARAM_FLOAT, kd_z, &kd_z)
-PARAM_ADD(PARAM_FLOAT, ki_z, &ki_z)
-PARAM_ADD(PARAM_FLOAT, i_range_z, &i_range_z)
-PARAM_ADD(PARAM_FLOAT, mass, &g_vehicleMass)
-PARAM_ADD(PARAM_FLOAT, massThrust, &massThrust)
-PARAM_ADD(PARAM_FLOAT, kR_xy, &kR_xy)
-PARAM_ADD(PARAM_FLOAT, kR_z, &kR_z)
-PARAM_ADD(PARAM_FLOAT, kw_xy, &kw_xy)
-PARAM_ADD(PARAM_FLOAT, kw_z, &kw_z)
-PARAM_ADD(PARAM_FLOAT, ki_m_xy, &ki_m_xy)
-PARAM_ADD(PARAM_FLOAT, ki_m_z, &ki_m_z)
-PARAM_ADD(PARAM_FLOAT, kd_omega_rp, &kd_omega_rp)
-PARAM_ADD(PARAM_FLOAT, i_range_m_xy, &i_range_m_xy)
-PARAM_ADD(PARAM_FLOAT, i_range_m_z, &i_range_m_z)
+/**
+ * @brief Position P-gain (horizontal xy plane)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, kp_xy, &kp_xy)
+/**
+ * @brief Position D-gain (horizontal xy plane)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, kd_xy, &kd_xy)
+/**
+ * @brief Position I-gain (horizontal xy plane)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, ki_xy, &ki_xy)
+/**
+ * @brief Attitude maximum accumulated error (roll and pitch)
+ */
+PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, i_range_xy, &i_range_xy)
+/**
+ * @brief Position P-gain (vertical z plane)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, kp_z, &kp_z)
+/**
+ * @brief Position D-gain (vertical z plane)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, kd_z, &kd_z)
+/**
+ * @brief Position I-gain (vertical z plane)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, ki_z, &ki_z)
+/**
+ * @brief Position maximum accumulated error (vertical z plane)
+ */
+PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, i_range_z, &i_range_z)
+/**
+ * @brief total mass [kg]
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, mass, &g_vehicleMass)
+/**
+ * @brief Force to PWM stretch factor
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, massThrust, &massThrust)
+/**
+ * @brief Attitude P-gain (roll and pitch)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, kR_xy, &kR_xy)
+/**
+ * @brief Attitude P-gain (yaw)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, kR_z, &kR_z)
+/**
+ * @brief Attitude D-gain (roll and pitch)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, kw_xy, &kw_xy)
+/**
+ * @brief Attitude D-gain (yaw)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, kw_z, &kw_z)
+/**
+ * @brief Attitude I-gain (roll and pitch)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, ki_m_xy, &ki_m_xy)
+/**
+ * @brief Attitude I-gain (yaw)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, ki_m_z, &ki_m_z)
+/**
+ * @brief Angular velocity D-Gain (roll and pitch)
+ */
+PARAM_ADD_CORE(PARAM_FLOAT | PARAM_PERSISTENT, kd_omega_rp, &kd_omega_rp)
+/**
+ * @brief Attitude maximum accumulated error (roll and pitch)
+ */
+PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, i_range_m_xy, &i_range_m_xy)
+/**
+ * @brief Attitude maximum accumulated error (yaw)
+ */
+PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, i_range_m_z, &i_range_m_z)
 PARAM_GROUP_STOP(ctrlMel)
 
+/**
+ * Logging variables for the command and reference signals for the
+ * Mellinger controller
+ */
 LOG_GROUP_START(ctrlMel)
 LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)

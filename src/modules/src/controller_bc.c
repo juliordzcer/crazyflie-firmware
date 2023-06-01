@@ -4,9 +4,6 @@
 #include "position_controller.h"
 #include "controller_bc.h"
 
-// #include "pid.h"
-#include "commander.h"
-#include "platform_defaults.h"
 #include "log.h"
 #include "param.h"
 #include "math3d.h"
@@ -42,10 +39,6 @@ static float cmd_roll_n;
 static float cmd_pitch_n;
 static float cmd_yaw_n;
 
-static float cmd_roll_nn;
-static float cmd_pitch_nn;
-static float cmd_yaw_nn;
-
 void controllerbcReset(void)
 {
   iephi = 0;
@@ -56,14 +49,6 @@ void controllerbcReset(void)
   positionControllerResetAllPID();
 }
 
-// void setgainsbc(float new_k1_phi, float new_k2_phi, float new_k1_theta, float new_k2_theta, float new_k1_psi, float new_k2_psi) {
-//   k1_phi = new_k1_phi;
-//   k2_phi = new_k2_phi;
-//   k1_theta = new_k1_theta;
-//   k2_theta = new_k2_theta;
-//   k1_psi = new_k1_psi;
-//   k2_psi = new_k2_psi;
-// }
 
 void controllerbcInit(void)
 {
@@ -93,11 +78,13 @@ static float capAngle(float angle) {
   return result;
 }
 
-void controllerbc(control_t *control, setpoint_t *setpoint,
+void controllerbc(control_t *control, const setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
 {
+  control->controlMode = controlModeLegacy;
+
   if (RATE_DO_EXECUTE(ATTITUDE_RATE, tick)) {
     // Rate-controled YAW is moving YAW angle setpoint
     if (setpoint->mode.yaw == modeVelocity) {
@@ -222,13 +209,9 @@ void controllerbc(control_t *control, setpoint_t *setpoint,
     cmd_pitch  = control->pitch;
     cmd_yaw    = control->yaw;
 
-    cmd_roll_n = tau_bar_phi;
-    cmd_pitch_n = tau_bar_theta;
-    cmd_yaw_n = tau_bar_psi;
-
-    cmd_roll_nn = tau_phi;
-    cmd_pitch_nn = tau_theta;
-    cmd_yaw_nn = tau_psi;
+    cmd_roll_n = tau_phi;
+    cmd_pitch_n = tau_theta;
+    cmd_yaw_n = tau_psi;
 
   }
 
@@ -275,7 +258,4 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
-LOG_ADD(LOG_FLOAT, cmd_roll_nn, &cmd_roll_nn)
-LOG_ADD(LOG_FLOAT, cmd_pitch_nn, &cmd_pitch_nn)
-LOG_ADD(LOG_FLOAT, cmd_yaw_nn, &cmd_yaw_nn)
 LOG_GROUP_STOP(Backstepping)

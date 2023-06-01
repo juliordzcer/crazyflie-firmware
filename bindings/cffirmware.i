@@ -13,13 +13,12 @@
 #include "collision_avoidance.h"
 #include "imu_types.h"
 #include "controller_pid.h"
-#include "controller_smc.h"
-#include "controller_bc.h"
 #include "position_controller.h"
 #include "pid.h"
 #include "filter.h"
 #include "num.h"
 #include "controller_mellinger.h"
+#include "controller_brescianini.h"
 #include "power_distribution.h"
 %}
 
@@ -29,10 +28,9 @@
 %include "stabilizer_types.h"
 %include "collision_avoidance.h"
 %include "controller_pid.h"
-%include "controller_smc.h"
-%include "controller_bc.h"
 %include "imu_types.h"
 %include "controller_mellinger.h"
+%include "controller_brescianini.h"
 %include "power_distribution.h"
 
 %inline %{

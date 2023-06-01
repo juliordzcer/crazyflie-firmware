@@ -16,8 +16,8 @@
 static float k1_phi =12.0f;
 static float k2_phi = 0.022f;
 
-// static float k1_theta = 0.13;
-// static float k2_theta = 0.022;
+static float k1_theta = 12.0f;
+static float k2_theta = 0.022f;
 
 static float k1_psi = 9.0f;
 static float k2_psi = 0.032f;
@@ -40,20 +40,6 @@ static float cmd_yaw;
 static float cmd_roll_n;
 static float cmd_pitch_n;
 static float cmd_yaw_n;
-
-static float cmd_roll_nn;
-static float cmd_pitch_nn;
-static float cmd_yaw_nn;
-
-// void setgainssmc(float new_k1_phi, float new_k2_phi, float new_k1_theta, float new_k2_theta, float new_k1_psi, float new_k2_psi) {
-//   k1_phi = new_k1_phi;
-//   k2_phi = new_k2_phi;
-//   k1_theta = new_k1_theta;
-//   k2_theta = new_k2_theta;
-//   k1_psi = new_k1_psi;
-//   k2_psi = new_k2_psi;
-// }
-
 
 void controllersmcReset(void)
 {
@@ -93,11 +79,13 @@ static float capAngle(float angle) {
   return result;
 }
 
-void controllersmc(control_t *control, setpoint_t *setpoint,
+void controllersmc(control_t *control, const setpoint_t *setpoint,
                                          const sensorData_t *sensors,
                                          const state_t *state,
                                          const uint32_t tick)
 {
+  control->controlMode = controlModeLegacy;
+
   if (RATE_DO_EXECUTE(ATTITUDE_RATE, tick)) {
     // Rate-controled YAW is moving YAW angle setpoint
     if (setpoint->mode.yaw == modeVelocity) {
@@ -190,9 +178,6 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
     float Jy = 16.6e-6f;
     float Jz = 29.3e-6f;
 
-    float k1_theta = k1_phi;
-    float k2_theta = k2_phi;
-
     // Controlador Phi
     float S_phi       =  ephip + k1_phi * ephi;
     // Usando el signo
@@ -229,13 +214,9 @@ void controllersmc(control_t *control, setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    cmd_roll_n = tau_bar_phi;
-    cmd_pitch_n = tau_bar_theta;
-    cmd_yaw_n = tau_bar_psi;
-
-    cmd_roll_nn = tau_phi;
-    cmd_pitch_nn = tau_theta;
-    cmd_yaw_nn = tau_psi;
+    cmd_roll_n = tau_phi;
+    cmd_pitch_n = tau_theta;
+    cmd_yaw_n = tau_psi;
 
   }
 
@@ -265,8 +246,8 @@ PARAM_GROUP_START(SMC)
 PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
 PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
 
-// PARAM_ADD(PARAM_FLOAT, k1_theta, &k1_theta)
-// PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
+PARAM_ADD(PARAM_FLOAT, k1_theta, &k1_theta)
+PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
 
 PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
 PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
@@ -283,7 +264,4 @@ LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
 LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
 LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
-LOG_ADD(LOG_FLOAT, cmd_roll_nn, &cmd_roll_nn)
-LOG_ADD(LOG_FLOAT, cmd_pitch_nn, &cmd_pitch_nn)
-LOG_ADD(LOG_FLOAT, cmd_yaw_nn, &cmd_yaw_nn)
 LOG_GROUP_STOP(SMC)

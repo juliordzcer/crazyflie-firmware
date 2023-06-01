@@ -7,7 +7,7 @@
  *
  * Crazyflie control firmware
  *
- * Copyright (C) 2011-2012 Bitcraze AB
+ * Copyright (C) 2011-2022 Bitcraze AB
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,19 +34,6 @@
 /* Data structure used by the stabilizer subsystem.
  * All have a timestamp to be set when the data is calculated.
  */
-
-
-/** Leader info form */
-typedef struct leader_s {
-  uint32_t timestamp;  // Timestamp when the data was computed
-
-  float thrust;
-  float roll;
-  float pitch;
-  float yaw;
-
-} leader_t;
-
 
 /** Attitude in euler angle form */
 typedef struct attitude_s {
@@ -180,19 +167,65 @@ typedef struct state_s {
   acc_t acc;                // Gs (but acc.z without considering gravity)
 } state_t;
 
+#define STABILIZER_NR_OF_MOTORS 4
+
+typedef enum control_mode_e {
+  controlModeLegacy      = 0, // legacy mode with int16_t roll, pitch, yaw and float thrust
+  controlModeForceTorque = 1,
+  controlModeForce       = 2,
+} control_mode_t;
+
 typedef struct control_s {
-  int16_t roll;
-  int16_t pitch;
-  int16_t yaw;
-  float thrust;
+  union {
+    // controlModeLegacy
+    struct {
+      int16_t roll;
+      int16_t pitch;
+      int16_t yaw;
+      float thrust;
+    };
+
+    // controlModeForceTorque
+    // Note: Using SI units for a controller makes it hard to tune it for different platforms. The normalized force API
+    // is probably a better option.
+    struct {
+      float thrustSi;  // N
+      union { // Nm
+        float torque[3];
+        struct {
+          float torqueX;
+          float torqueY;
+          float torqueZ;
+        };
+      };
+    };
+
+    // controlModeForce
+    float normalizedForces[STABILIZER_NR_OF_MOTORS]; // 0.0 ... 1.0
+  };
+
+  control_mode_t controlMode;
 } control_t;
 
-typedef struct motors_thrust_s {
-  uint16_t m1;  // PWM ratio
-  uint16_t m2;  // PWM ratio
-  uint16_t m3;  // PWM ratio
-  uint16_t m4;  // PWM ratio
-} motors_thrust_t;
+typedef union {
+  int32_t list[STABILIZER_NR_OF_MOTORS];
+  struct {
+    int32_t m1;
+    int32_t m2;
+    int32_t m3;
+    int32_t m4;
+  } motors;
+} motors_thrust_uncapped_t;
+
+typedef union {
+  uint16_t list[STABILIZER_NR_OF_MOTORS];
+  struct {
+    uint16_t m1;  // PWM ratio
+    uint16_t m2;  // PWM ratio
+    uint16_t m3;  // PWM ratio
+    uint16_t m4;  // PWM ratio
+  } motors;
+} motors_thrust_pwm_t;
 
 typedef enum mode_e {
   modeDisable = 0,
@@ -200,11 +233,8 @@ typedef enum mode_e {
   modeVelocity
 } stab_mode_t;
 
-typedef struct setpoint_s 
-{
+typedef struct setpoint_s {
   uint32_t timestamp;
-
-  leader_t leader;  // Informacion del lider para metodologia lider seguidor. (Roll, Pitch, Yaw, Thrust)
 
   attitude_t attitude;      // deg
   attitude_t attitudeRate;  // deg/s
