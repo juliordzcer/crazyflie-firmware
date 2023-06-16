@@ -20,7 +20,7 @@
 
 // static int gain = 2;
 
-static float k0_phi = 45.0f; 
+static float k0_phi = 25.0f; 
 static float k1_phi = 365.8f;
 static float k2_phi = 1320.50f;
 
