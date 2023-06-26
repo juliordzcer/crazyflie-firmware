@@ -18,6 +18,8 @@ sudo apt-get update
 sudo apt install python3-pip -y
 sudo apt-get install make gcc-arm-none-eabi -y
 sudo apt install git -y
+sudo apt install git python3-pip libxcb-xinerama0 
+
 ```
 ### Cloning
 This repository uses git submodules. Clone with the `--recursive` flag
