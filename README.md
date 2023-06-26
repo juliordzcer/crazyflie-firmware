@@ -141,62 +141,13 @@ This project requires Python 3.7+.
 sudo apt install git python3-pip libxcb-xinerama0
 pip3 install --upgrade pip
 ```
-
+#### Installing the lib
+```
+pip3 install cflib
+ ```
 #### Installing the client
-##### From Pypi 
-Each release of the client is pushed to the [pypi repository](https://pypi.org/project/cfclient/), so it can be installed with pip:
-
 ```
 pip3 install cfclient
 ```
 
-##### Installing from source
-Clone the repository with git
 
-```
-git clone https://github.com/bitcraze/crazyflie-clients-python
-cd crazyflie-clients-python
-```
-
-All other dependencies on linux are handled by pip so to install an editable copy simply run:
-
-```
-pip3 install -e .
-```
-
-If you plan to do development on the client you should run:
-```
-pip3 install -e .[dev]
-```
-
-The client can now be run if the local pip bin directory is in the path (it should be in a
-venv or after a reboot).
-
-Avoid running pip in sudo, this would install dependencies system wide and could cause
-compatibility problems with already installed applications. If the ```pip``` of ```python3 -m pip``` command request
-the administrator password, you should run the command with ```--user```
-(for example ```python3 -m pip install --user -e .```). This should not be required on modern python distribution
-though since the *--user*  flag seems to be the default behavior.
-
-## Crazyflie Library Python
-### Install from Source
-
-#### From Pypi 
-```
-pip3 install cflib
- ```
-#### Clone  the repository
- ```
- git clone https://github.com/bitcraze/crazyflie-lib-python.git
- ```
-#### Install cflib from source
- ```
- cd crazyflie-lib-python
- pip3 install -e .
- ```
-
-#### Uninstall cflib
-
- ```
-pip3 uninstall cflib
- ```
