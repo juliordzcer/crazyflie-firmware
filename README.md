@@ -89,7 +89,7 @@ The supported way to flash when developping for the Crazyflie is to use the Craz
 * In your terminal, run
 
 ```bash
-$ make cload
+make cload
 ```
 
 It will try to find a Crazyflie in bootloader mode and flash the binary to it.
