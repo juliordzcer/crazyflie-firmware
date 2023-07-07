@@ -5,30 +5,33 @@
 #include "log.h"
 #include "param.h"
 #include "math3d.h"
+#include "num.h"
+#include <math.h>
+#include <float.h>
 
 #define dt (float)(1.0f/ATTITUDE_RATE)
 
 // Ganancias de los Observadores
-static float L_x = 2.5f;
-static float L_y = 2.5f;
-static float L_z = 2.5f;
+// static float L_x = 2.5f;
+// static float L_y = 2.5f;
+// static float L_z = 2.5f;
 
 static float L_phi = 3.0f;
 static float L_theta = 3.0f;
 static float L_psi = 3.0f;
 
 // Condiciones inciciales.
-static float xhat1 = 0.0f;
-static float xhat2 = 0.0f;
-static float xhat3 = 0.0f;
+// static float xhat1 = 0.0f;
+// static float xhat2 = 0.0f;
+// static float xhat3 = 0.0f;
 
-static float yhat1 = 0.0f;
-static float yhat2 = 0.0f;
-static float yhat3 = 0.0f;
+// static float yhat1 = 0.0f;
+// static float yhat2 = 0.0f;
+// static float yhat3 = 0.0f;
 
-static float zhat1 = 0.0f;
-static float zhat2 = 0.0f;
-static float zhat3 = 0.0f;
+// static float zhat1 = 0.0f;
+// static float zhat2 = 0.0f;
+// static float zhat3 = 0.0f;
 
 static float phihat1 = 0.0f;
 static float phihat2 = 0.0f;
@@ -44,17 +47,17 @@ static float psihat3 = 0.0f;
 
 void FTSMOReset(void)
 {
-    xhat1 = 0;
-    xhat2 = 0;
-    xhat3 = 0;
+    // xhat1 = 0;
+    // xhat2 = 0;
+    // xhat3 = 0;
 
-    yhat1 = 0;
-    yhat2 = 0;
-    yhat3 = 0;
+    // yhat1 = 0;
+    // yhat2 = 0;
+    // yhat3 = 0;
 
-    zhat1 = 0;
-    zhat2 = 0;
-    zhat3 = 0;
+    // zhat1 = 0;
+    // zhat2 = 0;
+    // zhat3 = 0;
 
     phihat1 = 0;
     phihat2 = 0;
@@ -114,56 +117,56 @@ void FTSMOAttitude( float phi,       float theta,       float psi,
 
 }
 
-void FTSMOPosition( float  x,      float  y,      float  z,
-                    float  xhat1,  float yhat1,   float zhat1,
-                    float  xhat2,  float yhat2,   float zhat2,
-                    float  xhat3,  float yhat3,   float zhat3,
-                    float* xhat1p, float* yhat1p, float* zhat1p,
-                    float* xhat2p, float* yhat2p, float* zhat2p,
-                    float* xhat3p, float* yhat3p, float* zhat3p)
-{
-    float k1_x = 2.0f * powf(L_x, 1.0 / 3.0);
-    float k2_x = 1.5f * sqrtf(L_x);
-    float k3_x = 1.1f * L_x;
+// void FTSMOPosition( float  x,      float  y,      float  z,
+//                     float  xhat1,  float yhat1,   float zhat1,
+//                     float  xhat2,  float yhat2,   float zhat2,
+//                     float  xhat3,  float yhat3,   float zhat3,
+//                     float* xhat1p, float* yhat1p, float* zhat1p,
+//                     float* xhat2p, float* yhat2p, float* zhat2p,
+//                     float* xhat3p, float* yhat3p, float* zhat3p)
+// {
+//     float k1_x = 2.0f * powf(L_x, 1.0 / 3.0);
+//     float k2_x = 1.5f * sqrtf(L_x);
+//     float k3_x = 1.1f * L_x;
 
-    float k1_y = 2.0f * powf(L_y, 1.0 / 3.0);
-    float k2_y = 1.5f * sqrtf(L_y);
-    float k3_y = 1.1f * L_y;
+//     float k1_y = 2.0f * powf(L_y, 1.0 / 3.0);
+//     float k2_y = 1.5f * sqrtf(L_y);
+//     float k3_y = 1.1f * L_y;
 
-    float k1_z = 2.0f * powf(L_z, 1.0 / 3.0);
-    float k2_z = 1.5f * sqrtf(L_z);
-    float k3_z = 1.1f * L_z;
+//     float k1_z = 2.0f * powf(L_z, 1.0 / 3.0);
+//     float k2_z = 1.5f * sqrtf(L_z);
+//     float k3_z = 1.1f * L_z;
 
-    // Cálculos para x
-    float ex1 = x - xhat1;
-    xhat1p = xhat1 + (xhat2 + k1_x * powf(fabs(ex1), 2.0 / 3.0) * sign(ex1)) * dt;
-    xhat2p = xhat2 + (xhat3 + k2_x * powf(fabs(ex1), 1.0 / 3.0) * sign(ex1)) * dt;
-    xhat3p = xhat3 + (k3_x * sign(ex1)) * dt;
+//     // Cálculos para x
+//     float ex1 = x - xhat1;
+//     xhat1p = xhat1 + (xhat2 + k1_x * powf(fabs(ex1), 2.0 / 3.0) * sign(ex1)) * dt;
+//     xhat2p = xhat2 + (xhat3 + k2_x * powf(fabs(ex1), 1.0 / 3.0) * sign(ex1)) * dt;
+//     xhat3p = xhat3 + (k3_x * sign(ex1)) * dt;
 
-    float ey1 = y - yhat1;
-    yhat1p = yhat1 + (yhat2 + k1_y * powf(fabs(ey1), 2.0 / 3.0) * sign(ey1)) * dt;
-    yhat2p = yhat2 + (yhat3 + k2_y * powf(fabs(ey1), 1.0 / 3.0) * sign(ey1)) * dt;
-    yhat3p = yhat3 + (k3_y * sign(ey1)) * dt;
+//     float ey1 = y - yhat1;
+//     yhat1p = yhat1 + (yhat2 + k1_y * powf(fabs(ey1), 2.0 / 3.0) * sign(ey1)) * dt;
+//     yhat2p = yhat2 + (yhat3 + k2_y * powf(fabs(ey1), 1.0 / 3.0) * sign(ey1)) * dt;
+//     yhat3p = yhat3 + (k3_y * sign(ey1)) * dt;
 
-    float ez1 = z - zhat1;
-    zhat1p = zhat1 + (zhat2 + k1_z * powf(fabs(ez1), 2.0 / 3.0) * sign(ez1)) * dt;
-    zhat2p = zhat2 + (zhat3 + k2_z * powf(fabs(ez1), 1.0 / 3.0) * sign(ez1)) * dt;
-    zhat3p = zhat3 + (k3_z * sign(ez1)) * dt;
-}
+//     float ez1 = z - zhat1;
+//     zhat1p = zhat1 + (zhat2 + k1_z * powf(fabs(ez1), 2.0 / 3.0) * sign(ez1)) * dt;
+//     zhat2p = zhat2 + (zhat3 + k2_z * powf(fabs(ez1), 1.0 / 3.0) * sign(ez1)) * dt;
+//     zhat3p = zhat3 + (k3_z * sign(ez1)) * dt;
+// }
 
  
 LOG_GROUP_START(FTSMO)
-LOG_ADD(LOG_FLOAT, xhat1, &xhat1)
-LOG_ADD(LOG_FLOAT, xhat2, &xhat2)
-LOG_ADD(LOG_FLOAT, xhat3, &xhat3)
+// LOG_ADD(LOG_FLOAT, xhat1, &xhat1)
+// LOG_ADD(LOG_FLOAT, xhat2, &xhat2)
+// LOG_ADD(LOG_FLOAT, xhat3, &xhat3)
 
-LOG_ADD(LOG_FLOAT, yhat1, &yhat1)
-LOG_ADD(LOG_FLOAT, yhat2, &yhat2)
-LOG_ADD(LOG_FLOAT, yhat3, &yhat3)
+// LOG_ADD(LOG_FLOAT, yhat1, &yhat1)
+// LOG_ADD(LOG_FLOAT, yhat2, &yhat2)
+// LOG_ADD(LOG_FLOAT, yhat3, &yhat3)
 
-LOG_ADD(LOG_FLOAT, zhat1, &zhat1)
-LOG_ADD(LOG_FLOAT, zhat2, &zhat2)
-LOG_ADD(LOG_FLOAT, zhat3, &zhat3)
+// LOG_ADD(LOG_FLOAT, zhat1, &zhat1)
+// LOG_ADD(LOG_FLOAT, zhat2, &zhat2)
+// LOG_ADD(LOG_FLOAT, zhat3, &zhat3)
 
 LOG_ADD(LOG_FLOAT, phihat1, &phihat1)
 LOG_ADD(LOG_FLOAT, phihat2, &phihat2)
@@ -179,9 +182,9 @@ LOG_ADD(LOG_FLOAT, psihat3, &psihat3)
 LOG_GROUP_STOP(FTSMO)
 
 PARAM_GROUP_START(pid_attitude)
-PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, L_x, &L_x)
-PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, L_y, &L_y)
-PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, L_z, &L_z)
+// PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, L_x, &L_x)
+// PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, L_y, &L_y)
+// PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, L_z, &L_z)
 
 PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, L_phi, &L_phi)
 PARAM_ADD(PARAM_FLOAT | PARAM_PERSISTENT, L_theta, &L_theta)
