@@ -16,19 +16,31 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float kp_phi = 8.0f;
-static float ki_phi = 2.0f;
-static float kd_phi = 8.0f;
+// static float kp_phi = 8.0f;
+// static float ki_phi = 2.0f;
+// static float kd_phi = 8.0f;
 
-static float kp_theta = 8.0f;
-static float ki_theta = 2.0f;
-static float kd_theta = 8.0f;
+// static float kp_theta = 8.0f;
+// static float ki_theta = 2.0f;
+// static float kd_theta = 8.0f;
 
-static float kp_psi = 4.0f;
-static float ki_psi = 1.0f;
-static float kd_psi = 12.0f;
+// static float kp_psi = 4.0f;
+// static float ki_psi = 1.0f;
+// static float kd_psi = 12.0f;
 
-static float ks = 1000.0f;
+static float kp_phi = 0.6f;
+static float ki_phi = 0.001f;
+static float kd_phi = 0.2f;
+
+static float kp_theta = 0.6f;
+static float ki_theta = 0.001f;
+static float kd_theta = 0.2f;
+
+static float kp_psi = 0.55f;
+static float ki_psi = 0.001f;
+static float kd_psi = 0.22f;
+
+// static float ks = 1000.0f;
 
 static float iephi = 0.0f;
 static float ietheta = 0.0f;
@@ -222,14 +234,14 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
     psihat2 = psihat2 + (psihat3 + k2_psi * powf(fabsf(epsi1), 1.0f / 3.0f) * (epsi1 < 0 ? -1.0f : 1.0f)) * dt;
     psihat3 = psihat3 + (k3_psi * (epsi1 < 0 ? -1.0f : 1.0f)) * dt;
 
-    // attitudeControllerCorrectAttitudePID(state->attitude.roll, state->attitude.pitch, state->attitude.yaw,
-    //                             attitudeDesired.roll, attitudeDesired.pitch, attitudeDesired.yaw,
-    //                             &rateDesired.roll, &rateDesired.pitch, &rateDesired.yaw);
+    attitudeControllerCorrectAttitudePID(state->attitude.roll, state->attitude.pitch, state->attitude.yaw,
+                                attitudeDesired.roll, attitudeDesired.pitch, attitudeDesired.yaw,
+                                &rateDesired.roll, &rateDesired.pitch, &rateDesired.yaw);
 
  
-    rateDesired.roll  = phihat2;
-    rateDesired.pitch = thetahat2;
-    rateDesired.yaw   = psihat2;
+    // rateDesired.roll  = phihat2;
+    // rateDesired.pitch = thetahat2;
+    // rateDesired.yaw   = psihat2;
 
 
     if (setpoint->mode.roll == modeVelocity) {
