@@ -222,11 +222,14 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
     psihat2 = psihat2 + (psihat3 + k2_psi * powf(fabsf(epsi1), 1.0f / 3.0f) * (epsi1 < 0 ? -1.0f : 1.0f)) * dt;
     psihat3 = psihat3 + (k3_psi * (epsi1 < 0 ? -1.0f : 1.0f)) * dt;
 
-    attitudeControllerCorrectAttitudePID(state->attitude.roll, state->attitude.pitch, state->attitude.yaw,
-                                attitudeDesired.roll, attitudeDesired.pitch, attitudeDesired.yaw,
-                                &rateDesired.roll, &rateDesired.pitch, &rateDesired.yaw);
+    // attitudeControllerCorrectAttitudePID(state->attitude.roll, state->attitude.pitch, state->attitude.yaw,
+    //                             attitudeDesired.roll, attitudeDesired.pitch, attitudeDesired.yaw,
+    //                             &rateDesired.roll, &rateDesired.pitch, &rateDesired.yaw);
 
-
+ 
+    rateDesired.roll  = phihat2;
+    rateDesired.pitch = thetahat2;
+    rateDesired.yaw   = psihat2;
 
 
     if (setpoint->mode.roll == modeVelocity) {
@@ -237,8 +240,6 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
       rateDesired.pitch = setpoint->attitudeRate.pitch;
       attitudeControllerResetPitchAttitudePID();
     }
-
-
 
 
     // Errores de orientacion [Rad].
@@ -259,21 +260,24 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
     float ethetap = thetadp - thetap;
     float epsip   = psidp - psip; 
 
-    float Jx = 16.6e-6f;
-    float Jy = 16.6e-6f;
-    float Jz = 29.3e-6f;
+    // float Jx = 16.6e-6f;
+    // float Jy = 16.6e-6f;
+    // float Jz = 29.3e-6f;
 
     // Controlador Phi
     float tau_bar_phi   = kp_phi * ephi + ki_phi * iephi + kd_phi * ephip;
-    float tau_phi   = (Jx * ( tau_bar_phi - ((Jy-Jz)/Jx) * thetap * psip)) * ks;
+    float tau_phi   = tau_bar_phi;
+    // float tau_phi   = (Jx * ( tau_bar_phi - ((Jy-Jz)/Jx) * thetap * psip)) * ks;
 
     // Controlador Theta
     float tau_bar_theta = kp_theta * etheta + ki_theta * ietheta + kd_theta * ethetap;
-    float tau_theta = (Jy * ( tau_bar_theta - ((Jz-Jx)/Jy) * phip * psip))* ks;
+    float tau_theta = tau_bar_theta;
+    // float tau_theta = (Jy * ( tau_bar_theta - ((Jz-Jx)/Jy) * phip * psip))* ks;
 
     // Controlador Psi
     float tau_bar_psi   = kp_psi * epsi + ki_psi * iepsi + kd_psi * epsip;
-    float tau_psi   = (Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip))* ks;
+    float tau_psi = tau_bar_psi;
+    // float tau_psi   = (Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip))* ks;
 
     control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
