@@ -19,7 +19,7 @@
 
 #include "autoconf.h"
 
-#define DEFAULT_CONTROLLER ControllerTypePIDN
+#define DEFAULT_CONTROLLER ControllerTypeNTSMC
 static ControllerType currentController = ControllerTypeAny;
 
 static void initController();

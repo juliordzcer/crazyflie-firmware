@@ -14,22 +14,21 @@
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
 
-// static float zeta_phi   = 0.000261;  //0.00165f;
-// static float zeta_theta = 0.000261;  //0.00165f;
-// static float zeta_psi   = 0.00028;  //0.0018f;
+// static float zeta_phi   = 0.000165f; //0.000261;  //
+// static float zeta_theta = 0.000165f;//0.000261;  //
+// static float zeta_psi   = 0.00018f;//0.00028;  //
 
 // static int gain = 2;
 
-static float k0_phi = 25.0f; 
-static float k1_phi = 365.8f;
-static float k2_phi = 1320.50f;
+static float k0_phi = 10.0f; 
+static float k1_phi = 0.1f;
+static float k2_phi = 0.08f;
 
-static float k0_psi = 25.0f;
-static float k1_psi = 300.0f;
-static float k2_psi = 1200.0f;
+static float k0_psi = 8.0f;
+static float k1_psi = 0.09f;
+static float k2_psi = 0.1f;
 
 
-static float ks = 10.0f;
 
 static float iephi = 0;
 static float ietheta = 0;
@@ -166,60 +165,60 @@ void controllerntsmc(control_t *control, const setpoint_t *setpoint,
     float k0_theta = k0_phi;
     float k1_theta = k1_phi;
     float k2_theta = k2_phi;
-  //   float k0_phi, k1_phi, k2_phi;
-  //   float k0_theta, k1_theta, k2_theta;
-  //   float k0_psi, k1_psi, k2_psi;
+    // float k0_phi, k1_phi, k2_phi;
+    // float k0_theta, k1_theta, k2_theta;
+    // float k0_psi, k1_psi, k2_psi;
     
   //    switch(gain) {
   //     case 1:
-  //       k0_phi = 20.0f*powf(zeta_phi,-1.0f/2.0f);
+  //       k0_phi = 20.0f*powf(zeta_phi,-(1.0f/2.0f));
   //       k1_phi = 4.4f*powf(zeta_phi,2.0f/3.0f);
   //       k2_phi = 2.5f*zeta_phi;
 
-  //       k0_theta = 20.0f*powf(zeta_theta,-1.0f/2.0f);
+  //       k0_theta = 20.0f*powf(zeta_theta,-(1.0f/2.0f));
   //       k1_theta = 4.4f*powf(zeta_theta,2.0f/3.0f);
   //       k2_theta = 2.5f*zeta_theta;
 
-  //       k0_psi = 20.0f*powf(zeta_psi,-1.0f/2.0f);
+  //       k0_psi = 20.0f*powf(zeta_psi,-(1.0f/2.0f));
   //       k1_psi = 4.4f*powf(zeta_psi,2.0f/3.0f);
   //       k2_psi = 2.5f*zeta_psi;
   //       break;
   //     case 2:
-  //       k0_phi = 28.7f*powf(zeta_phi,-1.0f/2.0f);
+  //       k0_phi = 28.7f*powf(zeta_phi,-(1.0f/2.0f));
   //       k1_phi = 4.5f*powf(zeta_phi,2.0f/3.0f);
   //       k2_phi = 2.0f*zeta_phi;
 
-  //       k0_theta = 28.7f*powf(zeta_theta,-1.0f/2.0f);
+  //       k0_theta = 28.7f*powf(zeta_theta,-(1.0f/2.0f));
   //       k1_theta = 4.5f*powf(zeta_theta,2.0f/3.0f);
   //       k2_theta = 2.0f*zeta_theta;
 
-  //       k0_psi = 28.7f*powf(zeta_psi,-1.0f/2.0f);
+  //       k0_psi = 28.7f*powf(zeta_psi,-(1.0f/2.0f));
   //       k1_psi = 4.5f*powf(zeta_psi,2.0f/3.0f);
   //       k2_psi = 2.0f*zeta_psi;
   //       break;
   //     case 3:
-  //       k0_phi = 7.7f*powf(zeta_phi,-1.0f/2.0f);
+  //       k0_phi = 7.7f*powf(zeta_phi,-(1.0f/2.0f));
   //       k1_phi = 7.5f*powf(zeta_phi,2.0f/3.0f);
   //       k2_phi = 2.0f*zeta_phi;
 
-  //       k0_theta = 7.7f*powf(zeta_theta,-1.0f/2.0f);
+  //       k0_theta = 7.7f*powf(zeta_theta,-(1.0f/2.0f));
   //       k1_theta = 7.5f*powf(zeta_theta,2.0f/3.0f);
   //       k2_theta = 2.0f*zeta_theta;
 
-  //       k0_psi = 7.7f*powf(zeta_psi,-1.0f/2.0f);
+  //       k0_psi = 7.7f*powf(zeta_psi,-(1.0f/2.0f));
   //       k1_psi = 7.5f*powf(zeta_psi,2.0f/3.0f);
   //       k2_psi = 2.0f*zeta_psi;
   //       break;
   //     case 4:
-  //       k0_phi = 1.0f*powf(zeta_phi,-1.0f/2.0f);
+  //       k0_phi = 1.0f*powf(zeta_phi,-(1.0f/2.0f));
   //       k1_phi = 16.0f*powf(zeta_phi,2.0f/3.0f);
   //       k2_phi = 7.0f*zeta_phi;
 
-  //       k0_theta = 1.0f*powf(zeta_theta,-1.0f/2.0f);
+  //       k0_theta = 1.0f*powf(zeta_theta,-(1.0f/2.0f));
   //       k1_theta = 16.0f*powf(zeta_theta,2.0f/3.0f);
   //       k2_theta = 7.0f*zeta_theta;
 
-  //       k0_psi = 1.0f*powf(zeta_psi,-1.0f/2.0f);
+  //       k0_psi = 1.0f*powf(zeta_psi,-(1.0f/2.0f));
   //       k1_psi = 16.0f*powf(zeta_psi,2.0f/3.0f);
   //       k2_psi = 7.0f*zeta_psi;
   //       break;
@@ -255,8 +254,6 @@ void controllerntsmc(control_t *control, const setpoint_t *setpoint,
     float thetap  = -radians(sensors->gyro.y);
     float psip    =  radians(sensors->gyro.z);
 
-    // Errores de orientacion [Rad].
-
     // Error de orientacion.
     float ephi   = phid - phi;
     float etheta = thetad - theta;
@@ -267,27 +264,23 @@ void controllerntsmc(control_t *control, const setpoint_t *setpoint,
     float ethetap = thetadp - thetap;
     float epsip   = psidp - psip;
 
-    float Jx = 16.6e-6f;
-    float Jy = 16.6e-6f;
-    float Jz = 29.3e-6f; 
-
     // Control de Phi 
     float S_phi = ephi + k0_phi * powf(fabsf(ephip), 3.0f / 2.0f) * sign(ephip);
     nu_phi += (k2_phi * sign(S_phi)) * dt;
     float tau_bar_phi = nu_phi + k1_phi * powf(fabsf(S_phi), 1.0f/3.0f) * sign(S_phi);
-    float tau_phi   = (Jx * ( tau_bar_phi - ((Jy-Jz)/Jx) * thetap * psip)) * ks;
+    float tau_phi   = tau_bar_phi;
 
     // Control de Theta
     float S_theta = etheta + k0_theta * powf(fabsf(ethetap), 3.0f / 2.0f) * sign(ethetap);
     nu_theta += (k2_theta * sign(S_theta)) * dt;
     float tau_bar_theta = k1_theta * powf(fabsf(S_theta), 1.0f/3.0f) * sign(S_theta) + nu_theta;
-    float tau_theta = (Jy * ( tau_bar_theta - ((Jz-Jx)/Jy) * phip * psip))* ks;
+    float tau_theta = tau_bar_theta;
 
     // Control de Psi
     float S_psi = epsi + k0_psi * powf(fabsf(epsip), 2.0f / 3.0f) * sign(epsip);
     nu_psi += (k2_psi * sign(S_psi)) * dt;
     float tau_bar_psi = k1_psi * powf(fabsf(S_psi), 1.0f/3.0f) * sign(S_psi) + nu_psi;
-    float tau_psi   = (Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip))* ks;
+    float tau_psi   =  tau_bar_psi ;
 
     control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
@@ -342,7 +335,6 @@ PARAM_ADD(PARAM_FLOAT, k0_psi, &k0_psi)
 PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
 PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
 
-PARAM_ADD(PARAM_FLOAT, ks, &ks)
 
 PARAM_GROUP_STOP(NTSMC)
 
