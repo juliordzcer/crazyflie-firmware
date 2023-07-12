@@ -13,20 +13,22 @@
 #include "num.h"
 #include <math.h>
 #include <float.h>
+#include "filter.h"
+
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float kp_phi = 0.6f;
-static float ki_phi = 0.1f;
-static float kd_phi = 0.2f;
+static float kp_phi = 14.95f;
+static float ki_phi = 3.0f;
+static float kd_phi = 10.5f;
 
-static float kp_theta = 0.6f;
-static float ki_theta = 0.1f;
-static float kd_theta = 0.2f;
+static float kp_theta = 14.95f;
+static float ki_theta = 3.0f;
+static float kd_theta = 10.5f;
 
-static float kp_psi = 0.55f;
-static float ki_psi = 0.1f;
-static float kd_psi = 0.22f;
+static float kp_psi = 12.15f;
+static float ki_psi = 2.0f;
+static float kd_psi = 7.0f;
 
 static float iephi = 0.0f;
 static float ietheta = 0.0f;
@@ -53,6 +55,8 @@ static float rg_yaw;
 static float o_roll;
 static float o_pitch;
 static float o_yaw;
+
+lpf2pData filtro;
 
 void controllerpidnReset(void)
 {
@@ -98,6 +102,10 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
                                          const uint32_t tick)
 {
   control->controlMode = controlModeLegacy;
+
+  float sample_freq = ATTITUDE_RATE;
+  float cutoff_freq = 10;
+  lpf2pInit(&filtro, sample_freq, cutoff_freq);
 
   if (RATE_DO_EXECUTE(ATTITUDE_RATE, tick)) {
     // Rate-controled YAW is moving YAW angle setpoint
@@ -205,20 +213,24 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
 
     // Controlador Phi
     float tau_bar_phi   = kp_phi * ephi + ki_phi * iephi + kd_phi * ephip;
-    float tau_phi   = tau_bar_phi;
+    float tau_phi   = tau_bar_phi*1000.0f;
 
     // Controlador Theta
     float tau_bar_theta = kp_theta * etheta + ki_theta * ietheta + kd_theta * ethetap;
-    float tau_theta = tau_bar_theta;
+    float tau_theta = tau_bar_theta*1000.0f;
 
     // Controlador Psi
     float tau_bar_psi   = kp_psi * epsi + ki_psi * iepsi + kd_psi * epsip;
-    float tau_psi = tau_bar_psi;
+    float tau_psi = tau_bar_psi*1000.0f;
 
-    control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
-    control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
-    control->yaw = clamp(calculate_rpm(tau_psi), -32000, 32000);
+    // control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
+    // control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
+    // control->yaw = clamp(calculate_rpm(tau_psi), -32000, 32000);
     
+    control->roll = clamp((tau_phi), -32000, 32000);
+    control->pitch = clamp((tau_theta), -32000, 32000);
+    control->yaw = clamp((tau_psi), -32000, 32000);
+
     control->yaw = -control->yaw;
 
     cmd_thrust = control->thrust;
