@@ -18,26 +18,26 @@
 
 // Ganancias del controlador de orientacion.
 
-static float k0_phi = 0.20f; 
-static float k1_phi = 8.0f;
-static float k2_phi = 8.50f;
+// static float k0_phi = 0.20f; 
+// static float k1_phi = 8.0f;
+// static float k2_phi = 8.50f;
 
-static float k0_theta = 0.20f; 
-static float k1_theta = 8.0f;
-static float k2_theta = 8.50f;
+// static float k0_theta = 0.20f; 
+// static float k1_theta = 8.0f;
+// static float k2_theta = 8.50f;
 
-static float k0_psi = 0.10f;
-static float k1_psi = 10.0f;
-static float k2_psi = 8.0f;
+// static float k0_psi = 0.10f;
+// static float k1_psi = 10.0f;
+// static float k2_psi = 8.0f;
 
-// static float k0_phi = 0.001f;
-// static float zeta_phi = 1.0f;
+static float k0_phi = 0.0035f;
+static float zeta_phi = 0.875f; 
 
-// static float k0_theta = 2.001f;
-// static float zeta_theta = 1.0f;
+static float k0_theta = 0.0035f;
+static float zeta_theta = 0.875f; 
 
-// static float k0_psi = 1.0f;
-// static float zeta_psi = 1.0f;
+static float k0_psi = 0.0027f;
+static float zeta_psi = 0.76f; 
 
 static float iephi = 0;
 static float ietheta = 0;
@@ -168,14 +168,14 @@ void controllersta(control_t *control, const setpoint_t *setpoint,
 
     float dt = ATTITUDE_UPDATE_DT;
 
-    // float k1_phi = 1.5f*powf(zeta_phi,1.0f/2.0f);
-    // float k2_phi = 1.1f*zeta_phi;
+    float k1_phi = 1.5f*powf(zeta_phi,1.0f/2.0f);
+    float k2_phi = 1.1f*zeta_phi;
 
-    // float k1_theta = 1.5f*powf(zeta_theta,1.0f/2.0f);
-    // float k2_theta = 1.1f*zeta_theta;
+    float k1_theta = 1.5f*powf(zeta_theta,1.0f/2.0f);
+    float k2_theta = 1.1f*zeta_theta;
 
-    // float k1_psi = 1.5f*powf(zeta_psi,1.0f/2.0f);
-    // float k2_psi = 1.1f*zeta_psi;
+    float k1_psi = 1.5f*powf(zeta_psi,1.0f/2.0f);
+    float k2_psi = 1.1f*zeta_psi;
 
     // Conversion de a radianes
     float phid   = radians(attitudeDesired.roll);
@@ -194,36 +194,33 @@ void controllersta(control_t *control, const setpoint_t *setpoint,
     float thetap = -radians(sensors->gyro.y);
     float psip   =  radians(sensors->gyro.z);
 
-    // Errores de orientacion [Rad].
-
     // Error de orientacion.
-    float ephi   = phi - phid;
-    float etheta = theta - thetad;
-    float epsi   = psi - psid;
+    float ephi   = phid - phi;
+    float etheta = thetad - theta;
+    float epsi   = psid - psi;    
     
     // Error de velocidad angular
-    float ephip   = phip - phidp;
-    float ethetap = thetap - thetadp;
-    float epsip   = psip - psidp; 
-
+    float ephip   = phidp - phip;
+    float ethetap = thetadp - thetap;
+    float epsip   = psidp - psip;
 
     // Control de Phi 
     float S_phi = ephip + k0_phi*ephi;
-    nu_phi += (-k2_phi * sign(S_phi)) * dt;
-    float tau_bar_phi = -k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi) + nu_phi;
-    float tau_phi   = tau_bar_phi * 1000.0f;
+    nu_phi += (k2_phi * sign(S_phi)) * dt;
+    float tau_bar_phi = k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi) + nu_phi;
+    float tau_phi   = tau_bar_phi * 10000.0f;
 
     // Control de theta 
     float S_theta = ethetap + k0_theta*etheta;
-    nu_theta += (-k2_theta * sign(S_theta)) * dt;
-    float tau_bar_theta = - k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) + nu_theta;
-    float tau_theta =  tau_bar_theta * 1000.0f;
+    nu_theta += (k2_theta * sign(S_theta)) * dt;
+    float tau_bar_theta = k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) + nu_theta;
+    float tau_theta =  tau_bar_theta * 10000.0f;
    
     // Control de psi 
     float S_psi = epsip + k0_phi*epsi;
-    nu_psi += (-k2_psi * sign(S_psi)) * dt;
-    float tau_bar_psi = - k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + nu_psi;
-    float tau_psi   = tau_bar_psi* 1000.0f;
+    nu_psi += (k2_psi * sign(S_psi)) * dt;
+    float tau_bar_psi = k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + nu_psi;
+    float tau_psi   = tau_bar_psi* 10000.0f;
 
     control->roll = clamp((tau_phi), -32000, 32000);
     control->pitch = clamp((tau_theta), -32000, 32000);
@@ -261,19 +258,19 @@ void controllersta(control_t *control, const setpoint_t *setpoint,
 
 PARAM_GROUP_START(STA)
 PARAM_ADD(PARAM_FLOAT, k0_phi, &k0_phi)
-PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
-PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
-// PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
+// PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
+// PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
+PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
 
 PARAM_ADD(PARAM_FLOAT, k0_theta, &k0_theta)
-PARAM_ADD(PARAM_FLOAT, k1_theta, &k1_theta)
-PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
-// PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
+// PARAM_ADD(PARAM_FLOAT, k1_theta, &k1_theta)
+// PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
+PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
 
 PARAM_ADD(PARAM_FLOAT, k0_psi, &k0_psi)
-PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
-PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
-// PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
+// PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
+// PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
+PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
 
 PARAM_GROUP_STOP(STA)
 
