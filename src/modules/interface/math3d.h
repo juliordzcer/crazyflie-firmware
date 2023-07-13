@@ -58,6 +58,13 @@ static inline float calculate_rpm(float  thrust_newtons) {
     return (-b + sqrtf(discriminante)) / (2.0f * a) * sign(thrust_gramos);
 }
 
+
+static inline float calculate_thrust(float  rpm) 
+{
+    return 2.130295e-11*rpm^2 + 1.032633e-6*rpm + 5.484560e-4;;
+}
+
+
 // ----------------------------- scalars --------------------------------
 
 static inline float fsqr(float x) { return x * x; }
