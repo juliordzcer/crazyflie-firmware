@@ -18,24 +18,26 @@
 
 // Ganancias del controlador de orientacion.
 
-static float k0_phi = 0.5f; 
-static float k1_phi = 18.8f;
-static float k2_phi = 12.50f;
+// static float k0_phi = 0.20f; 
+// static float k1_phi = 8.0f;
+// static float k2_phi = 8.50f;
 
-static float k0_psi = 2.0f;
-static float k1_psi = 13.0f;
-static float k2_psi = 8.0f; 
+// static float k0_theta = 0.20f; 
+// static float k1_theta = 8.0f;
+// static float k2_theta = 8.50f;
 
-// static float k0_phi = 0.35f;
-// static float zeta_phi = 0.075f; 
+// static float k0_psi = 0.10f;
+// static float k1_psi = 10.0f;
+// static float k2_psi = 8.0f;
 
-// static float k0_theta = 0.35f;
-// static float zeta_theta = 0.075f; 
+static float k0_phi = 0.0035f;
+static float zeta_phi = 0.875f; 
 
-// static float k0_psi = 0.27f;
-// static float zeta_psi = 0.06f; 
+static float k0_theta = 0.0035f;
+static float zeta_theta = 0.875f; 
 
-static float ks = 1000.0f;
+static float k0_psi = 0.0027f;
+static float zeta_psi = 0.76f; 
 
 static float iephi = 0;
 static float ietheta = 0;
@@ -53,10 +55,6 @@ static float cmd_thrust;
 static float cmd_roll;
 static float cmd_pitch;
 static float cmd_yaw;
-
-static float cmd_roll_n;
-static float cmd_pitch_n;
-static float cmd_yaw_n;
 
 void controllerstsmcReset(void)
 {
@@ -169,18 +167,18 @@ void controllerstsmc(control_t *control, const setpoint_t *setpoint,
 
     float dt = ATTITUDE_UPDATE_DT;
 
-    float k0_theta = k0_phi;
-    float k1_theta = k1_phi;
-    float k2_theta = k2_phi;
+    // float k0_theta = k0_phi;
+    // float k1_theta = k1_phi;
+    // float k2_theta = k2_phi;
 
-    // float k1_phi = 1.5f*powf(zeta_phi,1.0f/2.0f);
-    // float k2_phi = 1.1f*zeta_phi;
+    float k1_phi = 1.5f*powf(zeta_phi,1.0f/2.0f);
+    float k2_phi = 1.1f*zeta_phi;
 
-    // float k1_theta = 1.5f*powf(zeta_theta,1.0f/2.0f);
-    // float k2_theta = 1.1f*zeta_theta;
+    float k1_theta = 1.5f*powf(zeta_theta,1.0f/2.0f);
+    float k2_theta = 1.1f*zeta_theta;
 
-    // float k1_psi = 1.5f*powf(zeta_psi,1.0f/2.0f);
-    // float k2_psi = 1.1f*zeta_psi;
+    float k1_psi = 1.5f*powf(zeta_psi,1.0f/2.0f);
+    float k2_psi = 1.1f*zeta_psi;
 
     // Conversion de a radianes
     float phid   = radians(attitudeDesired.roll);
@@ -199,43 +197,37 @@ void controllerstsmc(control_t *control, const setpoint_t *setpoint,
     float thetap = -radians(sensors->gyro.y);
     float psip   = radians(sensors->gyro.z);
 
-    // Errores de orientacion [Rad].
-
     // Error de orientacion.
-    float ephi   = phi - phid;
-    float etheta = theta - thetad;
-    float epsi   = psi - psid;    
+    float ephi   = phid - phi;
+    float etheta = thetad - theta;
+    float epsi   = psid - psi;    
     
     // Error de velocidad angular
-    float ephip   = phip - phidp;
-    float ethetap = thetap - thetadp;
-    float epsip   = psip - psidp; 
-
-    float Jx = 16.6e-6f;
-    float Jy = 16.6e-6f;
-    float Jz = 29.3e-6f;
+    float ephip   = phidp - phip;
+    float ethetap = thetadp - thetap;
+    float epsip   = psidp - psip;
 
     // Control de Phi 
     float S_phi = ephip + k0_phi * powf(fabsf(ephi), 2.0f / 3.0f) * sign(ephi);
-    nu_phi += (-k2_phi * sign(S_phi)) * dt;
-    float tau_bar_phi = nu_phi - k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi);
-    float tau_phi   = (Jx * ( tau_bar_phi - ((Jy-Jz)/Jx) * thetap * psip)) * ks;
+    nu_phi += (k2_phi * sign(S_phi)) * dt;
+    float tau_bar_phi = nu_phi + k1_phi * powf(fabsf(S_phi), 1.0f/2.0f) * sign(S_phi);
+    float tau_phi   =  tau_bar_phi * 10000.0f;
 
     // Control de Theta
     float S_theta = ethetap + k0_theta * powf(fabsf(etheta), 2.0f / 3.0f) * sign(etheta);
-    nu_theta += (-k2_theta * sign(S_theta)) * dt;
-    float tau_bar_theta = -k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) + nu_theta;
-    float tau_theta = (Jy * ( tau_bar_theta - ((Jz-Jx)/Jy) * phip * psip))* ks;
+    nu_theta += (k2_theta * sign(S_theta)) * dt;
+    float tau_bar_theta = k1_theta * powf(fabsf(S_theta), 1.0f/2.0f) * sign(S_theta) + nu_theta;
+    float tau_theta = tau_bar_theta  * 10000.0f;
 
     // Control de Psi
     float S_psi = epsip + k0_psi * powf(fabsf(epsi), 2.0f / 3.0f) * sign(epsi);
-    nu_psi += (-k2_psi * sign(S_psi)) * dt;
-    float tau_bar_psi = -k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + nu_psi;
-    float tau_psi   = (Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip))* ks;
+    nu_psi += (k2_psi * sign(S_psi)) * dt;
+    float tau_bar_psi = k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + nu_psi;
+    float tau_psi   = tau_bar_psi * 10000.0f;
 
-    control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
-    control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
-    control->yaw = clamp(calculate_rpm(tau_psi), -32000, 32000);
+    control->roll = clamp((tau_phi), -32000, 32000);
+    control->pitch = clamp((tau_theta), -32000, 32000);
+    control->yaw = clamp((tau_psi), -32000, 32000);
     
     control->yaw = -control->yaw;
 
@@ -243,10 +235,6 @@ void controllerstsmc(control_t *control, const setpoint_t *setpoint,
     cmd_roll = control->roll;
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
-
-    cmd_roll_n = tau_phi;
-    cmd_pitch_n = tau_theta;
-    cmd_yaw_n = tau_psi;
 
   }
 
@@ -270,24 +258,24 @@ void controllerstsmc(control_t *control, const setpoint_t *setpoint,
   }
 }
 PARAM_GROUP_START(STSMC)
-PARAM_ADD(PARAM_FLOAT, k0_phi, &k0_phi)
-PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
-PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
-
-
-// PARAM_ADD(PARAM_FLOAT, k0_theta, &k0_theta)
-// PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
-
-PARAM_ADD(PARAM_FLOAT, k0_psi, &k0_psi)
-PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
-PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
-
-// PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
 // PARAM_ADD(PARAM_FLOAT, k0_phi, &k0_phi)
-// PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
+// PARAM_ADD(PARAM_FLOAT, k1_phi, &k1_phi)
+// PARAM_ADD(PARAM_FLOAT, k2_phi, &k2_phi)
+
+
 // PARAM_ADD(PARAM_FLOAT, k0_theta, &k0_theta)
-// PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
+// PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
+
 // PARAM_ADD(PARAM_FLOAT, k0_psi, &k0_psi)
+// PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
+// PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
+
+PARAM_ADD(PARAM_FLOAT, zeta_phi, &zeta_phi)
+PARAM_ADD(PARAM_FLOAT, k0_phi, &k0_phi)
+PARAM_ADD(PARAM_FLOAT, zeta_theta, &zeta_theta)
+PARAM_ADD(PARAM_FLOAT, k0_theta, &k0_theta)
+PARAM_ADD(PARAM_FLOAT, zeta_psi, &zeta_psi)
+PARAM_ADD(PARAM_FLOAT, k0_psi, &k0_psi)
 PARAM_GROUP_STOP(STSMC)
 
 LOG_GROUP_START(STSMC)
@@ -295,7 +283,4 @@ LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
 LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
-LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
-LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
-LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
 LOG_GROUP_STOP(STSMC)

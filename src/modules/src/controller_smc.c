@@ -22,7 +22,7 @@ static float k2_theta = 0.022f;
 static float k1_psi = 9.0f;
 static float k2_psi = 0.032f;
 
-static float ks = 1000.0f;
+static float ks = 0.01f;
 
 static float iephi = 0.0f;
 static float ietheta = 0.0f;
@@ -36,10 +36,6 @@ static float cmd_thrust;
 static float cmd_roll;
 static float cmd_pitch;
 static float cmd_yaw;
-
-static float cmd_roll_n;
-static float cmd_pitch_n;
-static float cmd_yaw_n;
 
 void controllersmcReset(void)
 {
@@ -174,17 +170,13 @@ void controllersmc(control_t *control, const setpoint_t *setpoint,
     float ethetap = thetadp - thetap;
     float epsip   = psidp - psip; 
 
-    float Jx = 16.6e-6f;
-    float Jy = 16.6e-6f;
-    float Jz = 29.3e-6f;
-
     // Controlador Phi
     float S_phi       =  ephip + k1_phi * ephi;
     // Usando el signo
     // float tau_bar_phi   = k1_phi * ephip + k2_phi * sign(S_phi);
     // Usando la saturacion. 
     float tau_bar_phi   = k1_phi * ephip + k2_phi * clamp(S_phi/0.2f,-1,1);
-    float tau_phi   = (Jx * ( tau_bar_phi - ((Jy-Jz)/Jx) * thetap * psip)) * ks;
+    float tau_phi   = tau_bar_phi * ks;
 
 
     // Controlador Theta
@@ -193,7 +185,7 @@ void controllersmc(control_t *control, const setpoint_t *setpoint,
     // float tau_bar_theta = k1_theta * ethetap + k2_theta * sign(S_theta);
     // Usando la saturacion
     float tau_bar_theta = k1_theta * ethetap + k2_theta * clamp(S_theta/0.2f,-1,1);
-    float tau_theta = (Jy * ( tau_bar_theta - ((Jz-Jx)/Jy) * phip * psip))* ks;
+    float tau_theta = tau_bar_theta * ks;
 
     // Controlador Psi
     float S_psi       =  epsip + k1_psi * epsi;
@@ -201,7 +193,7 @@ void controllersmc(control_t *control, const setpoint_t *setpoint,
     // float tau_bar_psi   = -k1_psi * epsip - k2_psi * sign(S_psi);
     // Usando la saturacion
     float tau_bar_psi   = k1_psi * epsip + k2_psi * clamp(S_psi/0.2f,-1,1);
-    float tau_psi   = (Jz * ( tau_bar_psi - ((Jx-Jy)/Jz) * thetap * phip))* ks;
+    float tau_psi   = tau_bar_psi * ks;
 
     control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
     control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
@@ -213,10 +205,6 @@ void controllersmc(control_t *control, const setpoint_t *setpoint,
     cmd_roll = control->roll;
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
-
-    cmd_roll_n = tau_phi;
-    cmd_pitch_n = tau_theta;
-    cmd_yaw_n = tau_psi;
 
   }
 
@@ -261,7 +249,4 @@ LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
 LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
-LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
-LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
-LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
 LOG_GROUP_STOP(SMC)
