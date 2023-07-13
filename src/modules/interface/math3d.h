@@ -64,7 +64,7 @@ static inline float calculate_thrust(float  rpm)
 	float a = 2.130295e-11f;
     float b = 1.032633e-6f;
     float c = 5.484560e-4f;
-    return a*rpm^2 + b*rpm + c;
+    return a*powf(rpm, 2.0f) + b*rpm + c;
 }
 
 
