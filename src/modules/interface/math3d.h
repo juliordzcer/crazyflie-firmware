@@ -53,9 +53,9 @@ static inline float calculate_rpm(float  thrust_newtons) {
     float a = 2.130295e-11f;
     float b = 1.032633e-6f;
     float c = 5.484560e-4f;
-    float discriminante = powf(b, 2.0f) - 4.0f * a * (c - fabsf(thrust_gramos));
+    float discriminante = powf(b, 2.0f) - 4.0f * a * (c - fabsf(thrust_newtons));
     
-    return (-b + sqrtf(discriminante)) / (2.0f * a) * sign(thrust_gramos);
+    return (-b + sqrtf(discriminante)) / (2.0f * a) * sign(thrust_newtons);
 }
 
 
