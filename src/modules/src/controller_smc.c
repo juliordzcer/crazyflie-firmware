@@ -37,6 +37,10 @@ static float cmd_roll;
 static float cmd_pitch;
 static float cmd_yaw;
 
+static float cmd_roll_n;
+static float cmd_pitch_n;
+static float cmd_yaw_n;
+
 void controllersmcReset(void)
 {
   iephi = 0;
@@ -195,9 +199,9 @@ void controllersmc(control_t *control, const setpoint_t *setpoint,
     float tau_bar_psi   = k1_psi * epsip + k2_psi * clamp(S_psi/0.2f,-1,1);
     float tau_psi   = tau_bar_psi * ks;
 
-    control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
-    control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
-    control->yaw = clamp(calculate_rpm(tau_psi), -32000, 32000);
+    control->roll = clamp((tau_phi), -32000, 32000);
+    control->pitch = clamp((tau_theta), -32000, 32000);
+    control->yaw = clamp((tau_psi), -32000, 32000);
     
     control->yaw = -control->yaw;
 
@@ -205,6 +209,10 @@ void controllersmc(control_t *control, const setpoint_t *setpoint,
     cmd_roll = control->roll;
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
+
+    cmd_roll_n  = calculate_thrust(control->roll);
+    cmd_pitch_n = calculate_thrust(control->pitch);
+    cmd_yaw_n   = calculate_thrust(control->yaw);
 
   }
 
@@ -249,4 +257,8 @@ LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
 LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
 LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
 LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
+
+LOG_ADD(LOG_FLOAT, cmd_roll_n, &cmd_roll_n)
+LOG_ADD(LOG_FLOAT, cmd_pitch_n, &cmd_pitch_n)
+LOG_ADD(LOG_FLOAT, cmd_yaw_n, &cmd_yaw_n)
 LOG_GROUP_STOP(SMC)
