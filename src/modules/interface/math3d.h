@@ -61,7 +61,7 @@ static inline float calculate_rpm(float  thrust_newtons) {
 
 static inline float calculate_thrust(float  rpm) 
 {
-    return 2.130295e-11*rpm^2 + 1.032633e-6*rpm + 5.484560e-4;;
+    return 2.130295e-11f*rpm^2 + 1.032633e-6f*rpm + 5.484560e-4f;
 }
 
 
