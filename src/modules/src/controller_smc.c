@@ -22,7 +22,7 @@ static float k2_theta = 0.022f;
 static float k1_psi = 9.0f;
 static float k2_psi = 0.032f;
 
-static float ks = 0.01f;
+static float ks = 1000.0f;
 
 static float iephi = 0.0f;
 static float ietheta = 0.0f;

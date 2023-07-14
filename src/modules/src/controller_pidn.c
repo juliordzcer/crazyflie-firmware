@@ -8,12 +8,11 @@
 #include "platform_defaults.h"
 #include "log.h"
 #include "param.h"
-#include "FTSMO.h"
+// #include "FTSMO.h"
 #include "math3d.h"
 #include "num.h"
 #include <math.h>
 #include <float.h>
-#include "filter.h"
 
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
@@ -34,10 +33,7 @@ static float iephi = 0.0f;
 static float ietheta = 0.0f;
 static float iepsi = 0.0f;
 
-static float thetaprev = 0.0f;
-
-
-static attitude_t rate;
+// static attitude_t rate;
 
 static attitude_t attitudeDesired;
 static attitude_t rateDesired;
@@ -56,14 +52,12 @@ static float o_roll;
 static float o_pitch;
 static float o_yaw;
 
-lpf2pData filtro;
 
 void controllerpidnReset(void)
 {
   iephi = 0.0f;
   ietheta = 0.0f;
   iepsi = 0.0f;
-  thetaprev = 0.0f;
   attitudeControllerResetAllPID();
   positionControllerResetAllPID();
 }
@@ -102,10 +96,6 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
                                          const uint32_t tick)
 {
   control->controlMode = controlModeLegacy;
-
-  float sample_freq = ATTITUDE_RATE;
-  float cutoff_freq = 10;
-  lpf2pInit(&filtro, sample_freq, cutoff_freq);
 
   if (RATE_DO_EXECUTE(ATTITUDE_RATE, tick)) {
     // Rate-controled YAW is moving YAW angle setpoint
@@ -171,18 +161,16 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
                                 &rateDesired.roll, &rateDesired.pitch, &rateDesired.yaw);
 
     
-    FTSMO(state->attitude.roll, state->attitude.pitch, state->attitude.yaw,
-          &rate.roll, &rate.pitch, &rate.yaw);
+    // FTSMO(state->attitude.roll, state->attitude.pitch, state->attitude.yaw,
+    //       &rate.roll, &rate.pitch, &rate.yaw);
     
-    // float phip   = rate.roll;
-    // float thetap = rate.pitch;
+    // float phip   = radians(rate.roll);
+    // float thetap = radians(rate.pitch);
     // float psip   = rate.yaw;
         
     float phip   = radians(sensors->gyro.x);
-    float thetap = radians(-sensors->gyro.y);
+    float thetap =-radians(sensors->gyro.y);
     float psip   = radians(sensors->gyro.z);
-
-    float theta_p = (theta - thetaprev) / dt; 
 
     if (setpoint->mode.roll == modeVelocity) {
       rateDesired.roll = setpoint->attitudeRate.roll;
@@ -200,11 +188,11 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
        
     // Integral del error de orientacion.
     iephi   = iephi + ephi * dt;
-    // iephi = clamp(iephi, -1,1);
+    iephi = clamp(iephi, -1,1);
     ietheta = ietheta + etheta * dt;
-    // ietheta = clamp(ietheta, -1,1);
+    ietheta = clamp(ietheta, -1,1);
     iepsi   = iepsi + epsi * dt;
-    // iepsi = clamp(iepsi, -1.5,1.5);
+    iepsi = clamp(iepsi, -1.5,1.5);
     
     // Error de velocidad angular
     float ephip   = phidp - phip;
@@ -222,10 +210,6 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
     // Controlador Psi
     float tau_bar_psi   = kp_psi * epsi + ki_psi * iepsi + kd_psi * epsip;
     float tau_psi = tau_bar_psi*1000.0f;
-
-    // control->roll = clamp(calculate_rpm(tau_phi), -32000, 32000);
-    // control->pitch = clamp(calculate_rpm(tau_theta), -32000, 32000);
-    // control->yaw = clamp(calculate_rpm(tau_psi), -32000, 32000);
     
     control->roll = clamp((tau_phi), -32000, 32000);
     control->pitch = clamp((tau_theta), -32000, 32000);
@@ -238,15 +222,13 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
     cmd_pitch = control->pitch;
     cmd_yaw = control->yaw;
 
-    rg_roll  = radians(sensors->gyro.x);
-    rg_pitch = radians(-sensors->gyro.y);
-    rg_yaw   = radians(sensors->gyro.z);
+    rg_roll  = (sensors->gyro.x);
+    rg_pitch = -(sensors->gyro.y);
+    rg_yaw   = (sensors->gyro.z);
 
-    o_roll  = theta_p;
-    o_pitch = theta;
-    o_yaw   = psi;
-
-    thetaprev = theta;
+    o_roll  = degrees(phi);
+    o_pitch = degrees(theta);
+    o_yaw   = degrees(psi);
 
   }
 
@@ -286,10 +268,6 @@ PARAM_ADD(PARAM_FLOAT, kd_psi, &kd_psi)
 PARAM_GROUP_STOP(PIDN)
 
 LOG_GROUP_START(PIDN)
-LOG_ADD(LOG_FLOAT, cmd_thrust, &cmd_thrust)
-LOG_ADD(LOG_FLOAT, cmd_roll, &cmd_roll)
-LOG_ADD(LOG_FLOAT, cmd_pitch, &cmd_pitch)
-LOG_ADD(LOG_FLOAT, cmd_yaw, &cmd_yaw)
 
 LOG_ADD(LOG_FLOAT, rg_roll, &rg_roll)
 LOG_ADD(LOG_FLOAT, rg_pitch, &rg_pitch)

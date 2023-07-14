@@ -57,6 +57,11 @@
 #include "static_mem.h"
 #include "rateSupervisor.h"
 
+#include "FTSMO.h"
+
+
+#include "math3d.h"
+
 static bool isInit;
 static bool emergencyStop = false;
 static int emergencyStopTimeout = EMERGENCY_STOP_TIMEOUT_DISABLED;
@@ -68,6 +73,8 @@ static setpoint_t setpoint;
 static sensorData_t sensorData;
 static state_t state;
 static control_t control;
+
+// static attitude_t rate;
 
 static motors_thrust_uncapped_t motorThrustUncapped;
 static motors_thrust_uncapped_t motorThrustBatCompUncapped;
@@ -118,6 +125,13 @@ static struct {
   int16_t ay;
   int16_t az;
 } setpointCompressed;
+
+static struct {
+  float phi;
+  float theta;
+  float psi;
+  float u;
+} SignalsNewton;
 
 STATIC_MEM_TASK_ALLOC(stabilizerTask, STABILIZER_TASK_STACKSIZE);
 
@@ -266,6 +280,13 @@ static void stabilizerTask(void* param)
 
     // update sensorData struct (for logging variables)
     sensorsAcquire(&sensorData, tick);
+
+    SignalsNewton.phi = calculate_thrust(control.roll);
+    SignalsNewton.theta = calculate_thrust(control.pitch);
+    SignalsNewton.psi = calculate_thrust(control.yaw);
+    SignalsNewton.u = calculate_thrust(control.thrust);
+
+    // FTSMO(state.attitude.roll, state.attitude.pitch, state.attitude.yaw, &rate.roll, &rate.pitch, &rate.yaw);
 
     if (healthShallWeRunTest()) {
       healthRunTests(&sensorData);
@@ -650,6 +671,13 @@ LOG_GROUP_STOP(mag)
 LOG_GROUP_START(controller)
 LOG_ADD(LOG_INT16, ctr_yaw, &control.yaw)
 LOG_GROUP_STOP(controller)
+
+LOG_GROUP_START(signals_n)
+LOG_ADD(LOG_FLOAT, tau_phi, &SignalsNewton.phi)
+LOG_ADD(LOG_FLOAT, tau_theta, &SignalsNewton.theta)
+LOG_ADD(LOG_FLOAT, tau_psi, &SignalsNewton.psi)
+LOG_ADD(LOG_FLOAT, u, &SignalsNewton.u)
+LOG_GROUP_STOP(signals_n)
 
 LOG_GROUP_START(signals)
 LOG_ADD(LOG_INT16, tau_phi, &control.roll)
