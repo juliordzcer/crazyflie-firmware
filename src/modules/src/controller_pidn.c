@@ -8,7 +8,6 @@
 #include "platform_defaults.h"
 #include "log.h"
 #include "param.h"
-// #include "FTSMO.h"
 #include "math3d.h"
 #include "num.h"
 #include <math.h>
@@ -161,12 +160,6 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
                                 &rateDesired.roll, &rateDesired.pitch, &rateDesired.yaw);
 
     
-    // FTSMO(state->attitude.roll, state->attitude.pitch, state->attitude.yaw,
-    //       &rate.roll, &rate.pitch, &rate.yaw);
-    
-    // float phip   = radians(rate.roll);
-    // float thetap = radians(rate.pitch);
-    // float psip   = rate.yaw;
         
     float phip   = radians(sensors->gyro.x);
     float thetap =-radians(sensors->gyro.y);
