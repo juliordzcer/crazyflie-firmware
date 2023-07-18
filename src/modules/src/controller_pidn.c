@@ -1,7 +1,11 @@
 #include "stabilizer_types.h"
 
 #include "attitude_controller.h"
-#include "position_controller.h"
+// #include "position_controller.h"
+
+#include "controller_JCRC.h"
+
+
 #include "controller_pidn.h"
 
 #include "commander.h"
@@ -58,13 +62,17 @@ void controllerpidnReset(void)
   ietheta = 0.0f;
   iepsi = 0.0f;
   attitudeControllerResetAllPID();
-  positionControllerResetAllPID();
+  // positionControllerResetAllPID();
+
+  controllerJCRCReset();
 }
 
 void controllerpidnInit(void)
 {
   attitudeControllerInit(ATTITUDE_UPDATE_DT);
-  positionControllerInit();
+  // positionControllerInit();
+
+  controllerJCRCInit();
   controllerpidnReset();
 }
 
@@ -126,9 +134,14 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
     attitudeDesired.yaw = capAngle(attitudeDesired.yaw);
   }
 
-  // Control de posicion
+  // Control de posicion Bitcraze
+  // if (RATE_DO_EXECUTE(POSITION_RATE, tick)) {
+  //   positionController(&actuatorThrust, &attitudeDesired, setpoint, state);
+  // }
+
+  // Control de posicion Julio
   if (RATE_DO_EXECUTE(POSITION_RATE, tick)) {
-    positionController(&actuatorThrust, &attitudeDesired, setpoint, state);
+    controllerJCRC(&actuatorThrust, &attitudeDesired, setpoint, state);
   }
 
   if (RATE_DO_EXECUTE(ATTITUDE_RATE, tick)) {

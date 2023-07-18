@@ -47,6 +47,7 @@ obj-y += planner.o
 obj-y += platformservice.o
 obj-y += position_controller_indi.o
 obj-y += position_controller_pid.o
+obj-y += position_controller_JCRC.o
 obj-y += position_estimator_altitude.o
 obj-$(CONFIG_POWER_DISTRIBUTION_QUADROTOR) += power_distribution_quadrotor.o
 obj-$(CONFIG_POWER_DISTRIBUTION_FLAPPER) += power_distribution_flapper.o
