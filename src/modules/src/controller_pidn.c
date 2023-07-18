@@ -1,11 +1,7 @@
 #include "stabilizer_types.h"
 
 #include "attitude_controller.h"
-// #include "position_controller.h"
-
-#include "controller_JCRC.h"
-
-
+#include "position_controller.h"
 #include "controller_pidn.h"
 
 #include "commander.h"
@@ -62,17 +58,13 @@ void controllerpidnReset(void)
   ietheta = 0.0f;
   iepsi = 0.0f;
   attitudeControllerResetAllPID();
-  // positionControllerResetAllPID();
-
-  controllerJCRCReset();
+  positionControllerResetAllPID();
 }
 
 void controllerpidnInit(void)
 {
   attitudeControllerInit(ATTITUDE_UPDATE_DT);
-  // positionControllerInit();
-
-  controllerJCRCInit();
+  positionControllerInit();
   controllerpidnReset();
 }
 
@@ -134,14 +126,9 @@ void controllerpidn(control_t *control, const setpoint_t *setpoint,
     attitudeDesired.yaw = capAngle(attitudeDesired.yaw);
   }
 
-  // Control de posicion Bitcraze
-  // if (RATE_DO_EXECUTE(POSITION_RATE, tick)) {
-  //   positionController(&actuatorThrust, &attitudeDesired, setpoint, state);
-  // }
-
-  // Control de posicion Julio
+  // Control de posicion
   if (RATE_DO_EXECUTE(POSITION_RATE, tick)) {
-    controllerJCRC(&actuatorThrust, &attitudeDesired, setpoint, state);
+    positionController(&actuatorThrust, &attitudeDesired, setpoint, state);
   }
 
   if (RATE_DO_EXECUTE(ATTITUDE_RATE, tick)) {
@@ -284,4 +271,3 @@ LOG_ADD(LOG_FLOAT, o_pitch, &o_pitch)
 LOG_ADD(LOG_FLOAT, o_yaw, &o_yaw)
 
 LOG_GROUP_STOP(PIDN)
-

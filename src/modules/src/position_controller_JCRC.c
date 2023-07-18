@@ -20,13 +20,14 @@
 #define DT (float)(1.0f/POSITION_RATE)
 
 
-static float kp_xy = 14.95f;
-static float ki_xy = 3.0f;
-static float kd_xy = 10.5f;
+static float kp_xy = 10.95f;
+static float kd_xy = 3.5f;
+static float ki_xy = 0.0f;
 
 static float kp_z = 12.15f;
-static float ki_z = 2.0f;
-static float kd_z = 7.0f;
+static float kd_z = 3.0f;
+static float ki_z = 0.0f;
+
 
 static float ie_x = 0.0f;
 static float ie_y = 0.0f;
@@ -99,7 +100,7 @@ void controllerJCRC(float* thrust, attitude_t *attitude, const setpoint_t *setpo
   float phi = asinf((nu.x * sinyawd - nu.y * cosyawd)*( 0.32f / u )) ;
   float theta = atanf((nu.x * cosyawd + nu.y * sinyawd) / (nu.z + 9.81f));      
 
-  float u_rpm = clamp(calculate_rpm(u),10000.0f,60000.0f)*0.4f;
+  float u_rpm = clamp(calculate_rpm(u),10000.0f,60000.0f)*0.5f;
 
   attitude->roll  = clamp(phi,  -10, 10);
   attitude->pitch = clamp(theta, -10, 10);

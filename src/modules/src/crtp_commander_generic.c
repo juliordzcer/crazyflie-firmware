@@ -71,7 +71,7 @@ enum packet_type {
   hoverType         = 5,
   fullStateType     = 6,
   positionType      = 7,
-  fullType     = 8,
+  fullType          = 9,
 };
 
 /* ---===== 2 - Decoding functions =====--- */
@@ -384,6 +384,10 @@ struct fullPacket_s
   int16_t ax;        // acceleration - mm / sec^2
   int16_t ay;
   int16_t az;
+  int16_t psi;
+  int16_t psip;
+  int16_t psipp;
+  
 } __attribute__((packed));
 static void fullDecoder(setpoint_t *setpoint, uint8_t type, const void *data, size_t datalen)
 {
@@ -401,9 +405,12 @@ static void fullDecoder(setpoint_t *setpoint, uint8_t type, const void *data, si
   UNPACK(y)
   UNPACK(z)
   #undef UNPACK
+
+  float const millirad2deg = 180.0f / ((float)M_PI * 1000.0f);
+  setpoint->mode.yaw = modeAbs;
+  setpoint->attitudeRate.yaw = millirad2deg * values->psi;
+
 }
-
-
 
 
 /* positionDecoder

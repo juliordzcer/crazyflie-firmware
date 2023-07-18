@@ -131,6 +131,7 @@ static struct {
   float theta;
   float psi;
   float u;
+  int32_t Com;
 } SignalsNewton;
 
 STATIC_MEM_TASK_ALLOC(stabilizerTask, STABILIZER_TASK_STACKSIZE);
@@ -285,6 +286,13 @@ static void stabilizerTask(void* param)
     SignalsNewton.theta = calculate_thrust(control.pitch);
     SignalsNewton.psi = calculate_thrust(control.yaw);
     SignalsNewton.u = calculate_thrust(control.thrust);
+
+    float const qs[4] = {
+    SignalsNewton.phi,
+    SignalsNewton.theta,
+    SignalsNewton.psi,
+    SignalsNewton.u};
+    SignalsNewton.Com = quatcompress(qs);
 
     // FTSMO(state.attitude.roll, state.attitude.pitch, state.attitude.yaw, &rate.roll, &rate.pitch, &rate.yaw);
 
@@ -680,6 +688,7 @@ LOG_ADD(LOG_FLOAT, u, &SignalsNewton.u)
 LOG_GROUP_STOP(signals_n)
 
 LOG_GROUP_START(signals)
+LOG_ADD(LOG_UINT32, SC, &SignalsNewton.Com)
 LOG_ADD(LOG_INT16, tau_phi, &control.roll)
 LOG_ADD(LOG_INT16, tau_theta, &control.pitch)
 LOG_ADD(LOG_INT16, tau_psi, &control.yaw)
