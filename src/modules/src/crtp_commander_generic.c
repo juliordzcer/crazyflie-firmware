@@ -71,6 +71,7 @@ enum packet_type {
   hoverType         = 5,
   fullStateType     = 6,
   positionType      = 7,
+  fullType     = 8,
 };
 
 /* ---===== 2 - Decoding functions =====--- */
@@ -327,7 +328,8 @@ static void hoverDecoder(setpoint_t *setpoint, uint8_t type, const void *data, s
   setpoint->velocity_body = true;
 }
 
-struct fullStatePacket_s {
+struct fullStatePacket_s 
+{
   int16_t x;         // position - mm
   int16_t y;
   int16_t z;
@@ -371,6 +373,39 @@ static void fullStateDecoder(setpoint_t *setpoint, uint8_t type, const void *dat
   setpoint->mode.yaw = modeDisable;
 }
 
+struct fullPacket_s 
+{
+  int16_t x;         // position - mm
+  int16_t y;
+  int16_t z;
+  int16_t vx;        // velocity - mm / sec
+  int16_t vy;
+  int16_t vz;
+  int16_t ax;        // acceleration - mm / sec^2
+  int16_t ay;
+  int16_t az;
+} __attribute__((packed));
+static void fullDecoder(setpoint_t *setpoint, uint8_t type, const void *data, size_t datalen)
+{
+  const struct fullPacket_s *values = data;
+
+  ASSERT(datalen == sizeof(struct fullPacket_s));
+
+  #define UNPACK(x) \
+  setpoint->mode.x = modeAbs; \
+  setpoint->position.x = values->x / 1000.0f; \
+  setpoint->velocity.x = (values->v ## x) / 1000.0f; \
+  setpoint->acceleration.x = (values->a ## x) / 1000.0f; \
+
+  UNPACK(x)
+  UNPACK(y)
+  UNPACK(z)
+  #undef UNPACK
+}
+
+
+
+
 /* positionDecoder
  * Set the absolute postition and orientation
  */
@@ -408,6 +443,7 @@ const static packetDecoder_t packetDecoders[] = {
   [hoverType]         = hoverDecoder,
   [fullStateType]     = fullStateDecoder,
   [positionType]      = positionDecoder,
+  [fullType]          = fullDecoder,
 };
 
 /* Decoder switch */
