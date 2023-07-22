@@ -385,8 +385,6 @@ struct fullPacket_s
   int16_t ay;
   int16_t az;
   int16_t psi;
-  int16_t psip;
-  int16_t psipp;
   
 } __attribute__((packed));
 static void fullDecoder(setpoint_t *setpoint, uint8_t type, const void *data, size_t datalen)

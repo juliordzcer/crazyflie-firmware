@@ -691,6 +691,7 @@ LOG_GROUP_START(signals)
 LOG_ADD(LOG_UINT32, SC, &SignalsNewton.Com)
 LOG_ADD(LOG_INT16, tau_phi, &control.roll)
 LOG_ADD(LOG_INT16, tau_theta, &control.pitch)
+LOG_ADD(LOG_INT16, u, &control.thrust)
 LOG_ADD(LOG_INT16, tau_psi, &control.yaw)
 LOG_GROUP_STOP(signals)
 
