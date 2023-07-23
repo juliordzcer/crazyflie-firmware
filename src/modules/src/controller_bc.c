@@ -10,17 +10,14 @@
 
 #define ATTITUDE_UPDATE_DT    (float)(1.0f/ATTITUDE_RATE)
 
-static float k1_phi = 0.66765f;
-static float k2_phi = 0.018f;
+static float k1_phi = 16.6765f;
+static float k2_phi = 0.18f;
 
-static float k1_theta = 0.66765f;
-static float k2_theta = 0.018f;
+static float k1_theta = 16.6765f;
+static float k2_theta = 0.18f;
 
-static float k1_psi = 0.55685;
-static float k2_psi = 0.0235f;
-
-// Ganancia de escalamiento.
-static float ks = 0.15f;
+static float k1_psi = 15.5685;
+static float k2_psi = 0.235f;
 
 static float iephi   = 0;
 static float ietheta = 0;
@@ -159,9 +156,6 @@ void controllerbc(control_t *control, const setpoint_t *setpoint,
     float thetap = radians(-sensors->gyro.y);
     float psip   = radians(sensors->gyro.z);
 
-
-    // Errores de orientacion [Rad].
-
     // Error de orientacion.
     float ephi   = phid - phi;
     float etheta = thetad - theta;
@@ -176,23 +170,23 @@ void controllerbc(control_t *control, const setpoint_t *setpoint,
     float nu_phi = phidp + k1_phi * ephi;
     float ephi2 = nu_phi - phip;
     float tau_bar_phi = ephi + k1_phi * ephip + k2_phi * ephi2;
-    float tau_phi   = tau_bar_phi * ks;
+    float tau_phi   = tau_bar_phi * 1000.0f;;
 
     // Control de Theta
     float nu_theta = k1_theta * etheta + thetadp;
     float etheta2 = nu_theta - thetap;
     float tau_bar_theta = etheta + k1_theta * ethetap + k2_theta * etheta2;
-    float tau_theta = tau_bar_theta * ks;
+    float tau_theta = tau_bar_theta * 1000.0f;;
 
     // Control de Psi
     float nu_psi = k1_psi * epsi + psidp;
     float epsi2 = nu_psi - psip;
     float tau_bar_psi = epsi + k1_psi * epsip + k2_psi * epsi2;
-    float tau_psi   = tau_bar_psi * ks;
+    float tau_psi   = tau_bar_psi * 1000.0f;;
 
-    control->roll  = clamp(calculate_rpm(tau_phi)   , -32000, 32000);
-    control->pitch = clamp(calculate_rpm(tau_theta) , -32000, 32000);
-    control->yaw   = clamp(calculate_rpm(tau_psi)   , -32000, 32000);
+    control->roll  = clamp((tau_phi)   , -32000, 32000);
+    control->pitch = clamp((tau_theta) , -32000, 32000);
+    control->yaw   = clamp((tau_psi)   , -32000, 32000);
     
     control->yaw = -control->yaw;
 
@@ -233,8 +227,6 @@ PARAM_ADD(PARAM_FLOAT, k2_theta, &k2_theta)
 
 PARAM_ADD(PARAM_FLOAT, k1_psi, &k1_psi)
 PARAM_ADD(PARAM_FLOAT, k2_psi, &k2_psi)
-
-PARAM_ADD(PARAM_FLOAT, ks, &ks)
 
 PARAM_GROUP_STOP(Backstepping)
 
