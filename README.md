@@ -1,4 +1,47 @@
 
+# Master's thesis firmware (archived)
+
+Crazyflie 2.x firmware used in my master's thesis (2023): formation control of
+multiple quadrotors with continuous sliding-mode attitude controllers.
+
+- Author: Julio Cesar Rodriguez Cervantes - website: https://juliordz.com/
+- Thesis (corrected version, errata and stability appendix): https://juliordz.com/thesis/
+- Status: **archived**. This branch keeps the code used in the thesis experiments,
+  plus the fixes listed below. Current work continues on the ESP-Drone firmware.
+
+## Attitude controllers
+
+Selected with the `stabilizer.controller` parameter. Names as in the thesis:
+
+| Thesis | File | Law |
+|---|---|---|
+| PID | `controller_pidn.c` | PID on the attitude error |
+| ST | `controller_sta.c` | super-twisting on s = e' + k0 e, k1 = 1.5 zeta^(1/2), k2 = 1.1 zeta |
+| TC (CTA) | `controller_tc.c` | continuous twisting: k0 [e]^(1/3) + k1 [e']^(1/2) + v, v' = k2 [e]^0 + k3 [e']^0 |
+| MDST | `controller_stsmc.c` | super-twisting on s = e' + k0 [e]^(2/3) |
+| MDNST | `controller_ntsmc.c` | non-singular terminal surface s = e + k0 [e']^(3/2) |
+| - | `controller_smc.c`, `controller_bc.c` | classic sliding mode and backstepping (not used in the thesis) |
+
+Units: until July 2023 the laws computed torques in N*m (inertia, gyroscopic term)
+and converted them to PWM with the thrust curve; the final experiments scale the
+law output directly to PWM (x1000, or x10000 for ST and MDST).
+
+## Fixes after the thesis (2026)
+
+- ST: the yaw sliding surface used `k0_phi` instead of `k0_psi`.
+- MDNST: the yaw surface used the exponent 2/3 instead of 3/2.
+
+## TODO
+
+- **FT-SMO observer** (thesis Section 3.2.1, Eq. 1): `FTSMO.c` is written but never
+  called (the call in `stabilizer.c` is commented out), so the experiments ran
+  without the disturbance estimates xi_3 and eta_3 of Eqs. (10a) and (11).
+- `position_controller_JCRC.c` (Eqs. 10-11: thrust from the norm of the virtual
+  control, desired roll/pitch by asin/atan) is not called either; it would need
+  the angles in degrees and the mass corrected (0.32 -> 0.032 kg) before use.
+
+---
+
 # Crazyflie Firmware
 
 This repository is based on the following repositories, considering some changes in the codes to have compatibility with ubuntu 20.4 and with Optitrack's Motion Capture system and in addition control algorithms applied to individual nano quadrotors and in swarm will be added.
