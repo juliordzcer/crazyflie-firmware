@@ -263,7 +263,7 @@ void controllerntsmc(control_t *control, const setpoint_t *setpoint,
     float tau_theta = tau_bar_theta*1000.0f;
 
     // Control de Psi
-    float S_psi = epsi + k0_psi * powf(fabsf(epsip), 2.0f / 3.0f) * sign(epsip);
+    float S_psi = epsi + k0_psi * powf(fabsf(epsip), 3.0f / 2.0f) * sign(epsip);
     nu_psi += (k2_psi * sign(S_psi)) * dt;
     float tau_bar_psi = k1_psi * powf(fabsf(S_psi), 1.0f/3.0f) * sign(S_psi) + nu_psi;
     float tau_psi   =  tau_bar_psi *1000.0f;

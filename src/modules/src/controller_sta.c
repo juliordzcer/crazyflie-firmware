@@ -217,7 +217,7 @@ void controllersta(control_t *control, const setpoint_t *setpoint,
     float tau_theta =  tau_bar_theta * 10000.0f;
    
     // Control de psi 
-    float S_psi = epsip + k0_phi*epsi;
+    float S_psi = epsip + k0_psi*epsi;
     nu_psi += (k2_psi * sign(S_psi)) * dt;
     float tau_bar_psi = k1_psi * powf(fabsf(S_psi), 1.0f/2.0f) * sign(S_psi) + nu_psi;
     float tau_psi   = tau_bar_psi* 10000.0f;
